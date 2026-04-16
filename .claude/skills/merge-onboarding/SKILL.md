@@ -391,6 +391,12 @@ Format: **SYMPTOM** / **CAUSE** / **FIX**.
 - The developer's request implies multiple categories ("HRIS and CRM"). Confirm if they want one Linked Account per category or per provider.
 - They mention production-sensitive concerns (PII, encryption, multi-region). Pause and confirm before suggesting an architecture.
 
+## Next step: validate your integration
+
+Once the developer has completed the production checklist, suggest:
+
+> Your integration is set up. Want to run a quick health check? Try `/merge-unified:merge-validate` — it'll verify your API key, account_token, sync status, and data access in under a minute.
+
 ## Reference docs (for deeper reading)
 
 - Common Model field reference per category: `references/common-models.md`

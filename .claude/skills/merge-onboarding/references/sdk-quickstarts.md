@@ -270,11 +270,13 @@ MergeApiClient adminClient = MergeApiClient.builder()
 ### List Files
 
 ```java
-var page = client.filestorage().files().list();
-page.getResults().forEach(file ->
-    System.out.println(file.getName() + " (" + file.getMimeType() + ")")
-);
+var files = client.filestorage().files().list();
+for (var file : files) {
+    System.out.println(file.getName() + " (" + file.getMimeType() + ")");
+}
 ```
+
+The Java SDK returns a `SyncPagingIterable` — iterate directly with a for-each loop. Pagination is handled automatically.
 
 ---
 
@@ -414,7 +416,7 @@ var adminClient = new MergeClient("YOUR_TEST_KEY");
 ### List Employees
 
 ```csharp
-var employees = await client.Hris.Employees.ListAsync();
+var employees = await client.Hris.Employees.ListAsync(new EmployeesListRequest());
 foreach (var emp in employees.Results)
 {
     Console.WriteLine($"{emp.FirstName} {emp.LastName}");
@@ -463,7 +465,7 @@ curl https://api.merge.dev/api/filestorage/v1/files \
   -H "X-Account-Token: ACCOUNT_TOKEN_HERE"
 ```
 
-The base API path is `/api/{category}/v1/`. Categories: `hris`, `ats`, `accounting`, `ticketing`, `crm`, `mktg`, `filestorage`, `knowledge-base`.
+The base API path is `/api/{category}/v1/`. Categories: `hris`, `ats`, `accounting`, `ticketing`, `crm`, `mktg`, `filestorage`, `knowledgebase`.
 
 ## SDK feature parity table
 

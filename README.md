@@ -44,8 +44,8 @@ Or just describe what you want — Claude will pick the right skill:
 | Skill | Command | What it does |
 |-------|---------|--------------|
 | **Merge Onboarding** | `/merge-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
-
-_More skills coming soon._
+| **Integration Validator** | `/merge-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
+| **Migrate from Apideck** | `/migrate-from-apideck` | Detect Apideck SDK usage, map concepts to Merge equivalents, rewrite API calls, and flag behavioral differences. |
 
 ## What You'll Need
 
