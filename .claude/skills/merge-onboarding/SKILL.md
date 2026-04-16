@@ -56,7 +56,7 @@ This confirms install worked and surfaces the version so the developer knows if 
 Ask the developer (one at a time, **skip questions whose answers are obvious from their first message**):
 
 1. **Which Merge category?** HRIS, ATS, CRM, Accounting, Ticketing, File Storage, Knowledge Base, or Marketing.
-2. **Which SDK language?** Python, Node.js (TypeScript), or Kotlin. (Or vanilla HTTP if they prefer.)
+2. **Which SDK language?** Python, Node.js (TypeScript), Java/Kotlin, Go, Ruby, or C#/.NET. (Or vanilla HTTP if they prefer.)
 3. **Where are you in the journey?**
    - Just signed up, no API key yet
    - Have API key, no Linked Account yet
@@ -91,10 +91,10 @@ pip install MergePythonClient
 npm install @mergeapi/merge-node-client
 ```
 
-**Kotlin:**
-```kotlin
+**Java / Kotlin (JVM):**
+```groovy
 // build.gradle
-implementation("dev.merge:merge-kotlin-client:LATEST_VERSION")
+implementation 'dev.merge:merge-java-client'
 ```
 
 For React frontend (Merge Link component):
@@ -120,7 +120,7 @@ Optional:
 
 **Python example:**
 ```python
-from MergePythonClient import Merge
+from merge import Merge
 
 merge = Merge(api_key="YOUR_TEST_KEY")
 
@@ -394,7 +394,7 @@ Format: **SYMPTOM** / **CAUSE** / **FIX**.
 ## Reference docs (for deeper reading)
 
 - Common Model field reference per category: `references/common-models.md`
-- SDK install + initialization for Python, Node, Kotlin: `references/sdk-quickstarts.md`
+- SDK install + initialization for all 6 languages: `references/sdk-quickstarts.md`
 - Full link_token lifecycle, EndUserDetailsRequest schema, Magic Link variant: `references/auth-flow.md`
 - Webhook setup, signature verification, event types per category: `references/webhooks.md`
 

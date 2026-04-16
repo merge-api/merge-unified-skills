@@ -14,7 +14,6 @@ Fields below are in addition to the base set.
 
 ## HRIS — `Employee`
 
-Source: `merge-backend/merge/categories/hris/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -43,7 +42,6 @@ Other HRIS Common Models: `Employment`, `Team`, `Location`, `Company`, `Group`, 
 
 ## ATS — `Candidate`
 
-Source: `merge-backend/merge/categories/ats/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -64,7 +62,6 @@ Other ATS Common Models: `Application`, `Job`, `Department`, `Office`, `RejectRe
 
 ## CRM — `Contact`
 
-Source: `merge-backend/merge/categories/crm/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -85,7 +82,6 @@ Other CRM Common Models: `Account`, `Lead`, `Opportunity`, `Stage`, `Task`, `Not
 
 ## Accounting — `Invoice`
 
-Source: `merge-backend/merge/categories/accounting/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -106,7 +102,6 @@ Other Accounting Common Models: `Account`, `JournalEntry`, `Transaction`, `Payme
 
 ## Ticketing — `Ticket`
 
-Source: `merge-backend/merge/categories/ticketing/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -127,7 +122,6 @@ Other Ticketing Common Models: `Comment`, `Project`, `Collection`, `User`, `Team
 
 ## File Storage — `File`
 
-Source: `merge-backend/merge/categories/filestorage/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -150,7 +144,6 @@ Other File Storage Common Models: `Folder`, `Drive`, `User`, `Group`, `Permissio
 
 ## Knowledge Base — `Article`
 
-Source: `merge-backend/merge/categories/knowledgebase/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -171,7 +164,6 @@ Other Knowledge Base Common Models: `Container` (folders/spaces), `User`, `Attac
 
 ## Marketing — `Campaign`
 
-Source: `merge-backend/merge/categories/mktg/tests/schema_snapshot.json`
 
 | Field | Type | Notes |
 |-------|------|-------|

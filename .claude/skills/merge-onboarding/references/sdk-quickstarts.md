@@ -18,7 +18,7 @@ poetry add MergePythonClient
 ### Initialize
 
 ```python
-from MergePythonClient import Merge
+from merge import Merge
 
 # For making Unified API calls (need both API key and account_token)
 merge = Merge(
@@ -226,51 +226,208 @@ app.post("/api/merge/exchange", async (req, res) => {
 
 ---
 
-## Kotlin — `dev.merge:merge-kotlin-client`
+## Java / Kotlin — `dev.merge:merge-java-client`
+
+The JVM SDK. Works with Java and Kotlin projects.
 
 ### Install
 
-```kotlin
-// build.gradle.kts
+**Gradle:**
+```groovy
 dependencies {
-    implementation("dev.merge:merge-kotlin-client:LATEST_VERSION")
+    implementation 'dev.merge:merge-java-client'
 }
 ```
 
-Replace `LATEST_VERSION` with the current release from https://github.com/merge-api/merge-kotlin-client/releases.
+**Maven:**
+```xml
+<dependency>
+    <groupId>dev.merge</groupId>
+    <artifactId>merge-java-client</artifactId>
+    <version>5.0.1</version>
+</dependency>
+```
+
+Check https://github.com/merge-api/merge-java-client/releases for the latest version.
 
 ### Initialize
 
-```kotlin
-import dev.merge.client.Merge
+```java
+import com.merge.api.MergeApiClient;
 
-val merge = Merge.builder()
+// For Unified API calls
+MergeApiClient client = MergeApiClient.builder()
     .apiKey("YOUR_TEST_KEY")
     .accountToken("ACCOUNT_TOKEN")
-    .build()
-```
+    .build();
 
-### Generate a link_token
-
-```kotlin
-val response = merge.filestorage().linkToken().create(
-    LinkTokenRequest.builder()
-        .endUserEmailAddress("alice@acme.com")
-        .endUserOrganizationName("Acme Corp")
-        .endUserOriginId("user_123")
-        .categories(listOf("filestorage"))
-        .build()
-)
-println(response.linkToken)
+// For only generating link_tokens (no account_token needed yet)
+MergeApiClient adminClient = MergeApiClient.builder()
+    .apiKey("YOUR_TEST_KEY")
+    .build();
 ```
 
 ### List Files
 
-```kotlin
-val page = merge.filestorage().files().list(FileListParams.builder().pageSize(50).build())
-page.results.forEach { file ->
-    println("${file.name} (${file.mimeType})")
+```java
+var page = client.filestorage().files().list();
+page.getResults().forEach(file ->
+    System.out.println(file.getName() + " (" + file.getMimeType() + ")")
+);
+```
+
+---
+
+## Go — `github.com/merge-api/merge-go-client`
+
+### Install
+
+```bash
+go get github.com/merge-api/merge-go-client/v2
+```
+
+### Initialize
+
+```go
+import (
+    mergeclient "github.com/merge-api/merge-go-client/v2/client"
+    "github.com/merge-api/merge-go-client/v2/option"
+)
+
+client := mergeclient.NewClient(
+    option.WithApiKey("YOUR_TEST_KEY"),
+    option.WithAccountToken("ACCOUNT_TOKEN"),
+)
+```
+
+### List Employees
+
+```go
+import (
+    "context"
+    "github.com/merge-api/merge-go-client/v2/hris"
+)
+
+employeeList, err := client.Hris.Employees.List(
+    context.TODO(),
+    &hris.EmployeesListRequest{},
+)
+if err != nil {
+    log.Fatal(err)
 }
+for _, emp := range employeeList.Results {
+    fmt.Printf("%s %s\n", emp.FirstName, emp.LastName)
+}
+```
+
+### Paginate
+
+```go
+cursor := employeeList.Next
+for cursor != nil {
+    page, err := client.Hris.Employees.List(
+        context.TODO(),
+        &hris.EmployeesListRequest{Cursor: cursor},
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, emp := range page.Results {
+        fmt.Println(emp.FirstName)
+    }
+    cursor = page.Next
+}
+```
+
+---
+
+## Ruby — `merge_ruby_client`
+
+### Install
+
+```bash
+gem install merge_ruby_client
+```
+
+Or in your Gemfile:
+```ruby
+gem "merge_ruby_client"
+```
+
+### Initialize
+
+```ruby
+require "merge_ruby_client"
+
+# For Unified API calls
+client = Merge::Client.new(
+  api_key: "YOUR_TEST_KEY",
+  account_token: "ACCOUNT_TOKEN"
+)
+
+# For only generating link_tokens
+admin_client = Merge::Client.new(api_key: "YOUR_TEST_KEY")
+```
+
+### List Employees
+
+```ruby
+page = client.hris.employees.list
+page.results.each do |emp|
+  puts "#{emp.first_name} #{emp.last_name} — #{emp.work_email}"
+end
+```
+
+### Retrieve a single record
+
+```ruby
+employee = client.hris.employees.retrieve(id: "EMPLOYEE_UUID")
+```
+
+---
+
+## C# / .NET — `Merge.Client`
+
+### Install
+
+```bash
+dotnet add package Merge.Client
+```
+
+Or via NuGet Package Manager:
+```
+Install-Package Merge.Client
+```
+
+### Initialize
+
+```csharp
+using Merge.Client;
+
+// For Unified API calls
+var client = new MergeClient("YOUR_TEST_KEY", "ACCOUNT_TOKEN");
+
+// For only generating link_tokens
+var adminClient = new MergeClient("YOUR_TEST_KEY");
+```
+
+### List Employees
+
+```csharp
+var employees = await client.Hris.Employees.ListAsync();
+foreach (var emp in employees.Results)
+{
+    Console.WriteLine($"{emp.FirstName} {emp.LastName}");
+}
+```
+
+### Retrieve a single record
+
+```csharp
+var employee = await client.Hris.Employees.RetrieveAsync(
+    "EMPLOYEE_UUID",
+    new EmployeesRetrieveRequest { IncludeRemoteData = true }
+);
 ```
 
 ---
@@ -310,13 +467,13 @@ The base API path is `/api/{category}/v1/`. Categories: `hris`, `ats`, `accounti
 
 ## SDK feature parity table
 
-| Feature | Python | Node | Kotlin |
-|---------|:------:|:----:|:------:|
-| Sync API | ✅ | ✅ | ✅ |
-| Async API | ✅ | ✅ (native) | ✅ |
-| Auto-pagination | ❌ (manual) | ✅ (async iterator) | ❌ (manual) |
-| Type hints / generics | ✅ | ✅ (TS) | ✅ |
-| Webhook signature helper | ❌ (use `hmac` stdlib) | ❌ (use `crypto`) | ❌ |
-| Retries on 429/5xx | ✅ (configurable) | ✅ (configurable) | ✅ (configurable) |
+| Feature | Python | Node | Java | Go | Ruby | C# |
+|---------|:------:|:----:|:----:|:--:|:----:|:--:|
+| Sync API | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Async API | ✅ | ✅ (native) | ✅ | ✅ (goroutines) | ❌ | ✅ (async/await) |
+| Auto-pagination | ❌ (manual) | ✅ (async iterator) | ❌ (manual) | ❌ (manual) | ❌ (manual) | ❌ (manual) |
+| Type hints / generics | ✅ | ✅ (TS) | ✅ | ✅ | ❌ | ✅ |
+| Webhook signature helper | ❌ (use `hmac` stdlib) | ❌ (use `crypto`) | ❌ | ❌ | ❌ | ❌ |
+| Retries on 429/5xx | ✅ (configurable) | ✅ (configurable) | ✅ (configurable) | ✅ | ✅ | ✅ |
 
-For Python and Kotlin, write your own pagination loop. For Node, prefer the async iterator pattern.
+For Node, prefer the async iterator pattern. All other languages require manual pagination loops (fetch page, check `next` cursor, repeat).

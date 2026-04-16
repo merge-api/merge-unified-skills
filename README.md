@@ -64,7 +64,7 @@ All skills use Merge's official **Advanced SDKs**. Six languages are supported:
 | Ruby | `merge_ruby_client` (RubyGems) | [merge-ruby-client](https://github.com/merge-api/merge-ruby-client) |
 | C# / .NET | `Merge.Client` (NuGet) | [merge-csharp-client](https://github.com/merge-api/merge-csharp-client) |
 
-Skills detect your project's language and use the appropriate SDK. Two examples:
+Skills support all six languages — tell Claude which one you're using, or it'll ask. Two examples:
 
 **Python**
 
