@@ -1,0 +1,322 @@
+# SDK Quickstarts
+
+Copy-paste install + initialization + first API call for each supported SDK. All examples use **File Storage** as the category — swap to your category by replacing `filestorage` with `hris`, `ats`, `crm`, `accounting`, `ticketing`, `knowledgebase`, or `mktg`.
+
+## Python — `MergePythonClient`
+
+### Install
+
+```bash
+pip install MergePythonClient
+```
+
+Or with poetry:
+```bash
+poetry add MergePythonClient
+```
+
+### Initialize
+
+```python
+from MergePythonClient import Merge
+
+# For making Unified API calls (need both API key and account_token)
+merge = Merge(
+    api_key="YOUR_TEST_KEY",          # from https://app.merge.dev/keys
+    account_token="ACCOUNT_TOKEN",    # from Step 5 (token exchange)
+)
+
+# For only generating link_tokens (no account_token needed yet)
+merge_admin = Merge(api_key="YOUR_TEST_KEY")
+```
+
+### Generate a link_token
+
+```python
+response = merge_admin.filestorage.link_token.create(
+    end_user_email_address="alice@acme.com",
+    end_user_organization_name="Acme Corp",
+    end_user_origin_id="user_123",
+    categories=["filestorage"],
+    # Optional:
+    # integration="google-drive",       # pre-select a single provider
+    # link_expiry_mins=30,              # max 30
+)
+print(response.link_token)
+print(response.magic_link_url)         # email-able URL alternative to embedded Link
+```
+
+### Exchange public_token for account_token
+
+```python
+exchange = merge_admin.filestorage.account_token.retrieve(
+    public_token=public_token_from_frontend,
+)
+account_token = exchange.account_token
+# Persist: customer_record.merge_account_token = account_token
+```
+
+### List Files
+
+```python
+merge = Merge(api_key="YOUR_TEST_KEY", account_token=account_token)
+
+page = merge.filestorage.files.list(page_size=50)
+for file in page.results:
+    print(f"{file.name} ({file.mime_type}, {file.size} bytes)")
+
+# Paginate
+while page.next:
+    page = merge.filestorage.files.list(cursor=page.next, page_size=50)
+    for file in page.results:
+        print(f"{file.name}")
+```
+
+### Retrieve a single record
+
+```python
+file = merge.filestorage.files.retrieve(id="FILE_UUID")
+```
+
+### Force a sync
+
+```python
+merge.filestorage.sync_status.resync()
+```
+
+---
+
+## Node.js / TypeScript — `@mergeapi/merge-node-client`
+
+### Install
+
+```bash
+npm install @mergeapi/merge-node-client
+# or
+yarn add @mergeapi/merge-node-client
+# or
+pnpm add @mergeapi/merge-node-client
+```
+
+### Initialize
+
+```typescript
+import { MergeClient } from "@mergeapi/merge-node-client";
+
+// For Unified API calls
+const merge = new MergeClient({
+  apiKey: "YOUR_TEST_KEY",
+  accountToken: "ACCOUNT_TOKEN",
+});
+
+// For only generating link_tokens
+const mergeAdmin = new MergeClient({ apiKey: "YOUR_TEST_KEY" });
+```
+
+### Generate a link_token
+
+```typescript
+const response = await mergeAdmin.filestorage.linkToken.create({
+  endUserEmailAddress: "alice@acme.com",
+  endUserOrganizationName: "Acme Corp",
+  endUserOriginId: "user_123",
+  categories: ["filestorage"],
+});
+console.log(response.linkToken);
+console.log(response.magicLinkUrl);
+```
+
+### Exchange public_token
+
+```typescript
+const exchange = await mergeAdmin.filestorage.accountToken.retrieve(publicToken);
+const accountToken = exchange.accountToken;
+```
+
+### List Files
+
+```typescript
+const page = await merge.filestorage.files.list({ pageSize: 50 });
+page.results.forEach((file) => {
+  console.log(`${file.name} (${file.mimeType}, ${file.size} bytes)`);
+});
+
+// Paginate
+let cursor = page.next;
+while (cursor) {
+  const next = await merge.filestorage.files.list({ cursor, pageSize: 50 });
+  next.results.forEach((file) => console.log(file.name));
+  cursor = next.next;
+}
+```
+
+### Async iterator helper
+
+```typescript
+for await (const file of merge.filestorage.files.list()) {
+  console.log(file.name);
+}
+```
+
+The Node SDK supports auto-pagination via async iterators.
+
+---
+
+## React — `@mergeapi/react-merge-link`
+
+### Install
+
+```bash
+npm install @mergeapi/react-merge-link
+```
+
+### Use the hook
+
+```tsx
+import { useMergeLink } from "@mergeapi/react-merge-link";
+
+interface Props {
+  linkToken: string;
+}
+
+export function ConnectMergeButton({ linkToken }: Props) {
+  const { open, isReady } = useMergeLink({
+    linkToken,
+    onSuccess: async (publicToken) => {
+      // Send publicToken to your backend immediately
+      const res = await fetch("/api/merge/exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicToken }),
+      });
+      if (!res.ok) throw new Error("Token exchange failed");
+    },
+    onExit: () => {
+      console.log("User closed Merge Link");
+    },
+    onValidationError: (error) => {
+      console.error("Merge Link validation error:", error);
+    },
+  });
+
+  return (
+    <button onClick={open} disabled={!isReady}>
+      Connect your account
+    </button>
+  );
+}
+```
+
+### Backend exchange handler (Express example)
+
+```typescript
+import express from "express";
+import { MergeClient } from "@mergeapi/merge-node-client";
+
+const merge = new MergeClient({ apiKey: process.env.MERGE_API_KEY! });
+
+app.post("/api/merge/exchange", async (req, res) => {
+  const { publicToken } = req.body;
+  const { accountToken } = await merge.filestorage.accountToken.retrieve(publicToken);
+  // Save accountToken keyed to req.user.id
+  await db.users.update(req.user.id, { mergeAccountToken: accountToken });
+  res.json({ ok: true });
+});
+```
+
+---
+
+## Kotlin — `dev.merge:merge-kotlin-client`
+
+### Install
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("dev.merge:merge-kotlin-client:LATEST_VERSION")
+}
+```
+
+Replace `LATEST_VERSION` with the current release from https://github.com/merge-api/merge-kotlin-client/releases.
+
+### Initialize
+
+```kotlin
+import dev.merge.client.Merge
+
+val merge = Merge.builder()
+    .apiKey("YOUR_TEST_KEY")
+    .accountToken("ACCOUNT_TOKEN")
+    .build()
+```
+
+### Generate a link_token
+
+```kotlin
+val response = merge.filestorage().linkToken().create(
+    LinkTokenRequest.builder()
+        .endUserEmailAddress("alice@acme.com")
+        .endUserOrganizationName("Acme Corp")
+        .endUserOriginId("user_123")
+        .categories(listOf("filestorage"))
+        .build()
+)
+println(response.linkToken)
+```
+
+### List Files
+
+```kotlin
+val page = merge.filestorage().files().list(FileListParams.builder().pageSize(50).build())
+page.results.forEach { file ->
+    println("${file.name} (${file.mimeType})")
+}
+```
+
+---
+
+## Vanilla HTTP (curl) — useful for testing without an SDK
+
+### Generate link_token
+
+```bash
+curl -X POST https://api.merge.dev/api/integrations/create-link-token \
+  -H "Authorization: Bearer YOUR_TEST_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "end_user_email_address": "alice@acme.com",
+    "end_user_organization_name": "Acme Corp",
+    "end_user_origin_id": "user_123",
+    "categories": ["filestorage"]
+  }'
+```
+
+### Exchange public_token
+
+```bash
+curl https://api.merge.dev/api/integrations/account-token/PUBLIC_TOKEN_HERE \
+  -H "Authorization: Bearer YOUR_TEST_KEY"
+```
+
+### Make a Unified API call
+
+```bash
+curl https://api.merge.dev/api/filestorage/v1/files \
+  -H "Authorization: Bearer YOUR_TEST_KEY" \
+  -H "X-Account-Token: ACCOUNT_TOKEN_HERE"
+```
+
+The base API path is `/api/{category}/v1/`. Categories: `hris`, `ats`, `accounting`, `ticketing`, `crm`, `mktg`, `filestorage`, `knowledge-base`.
+
+## SDK feature parity table
+
+| Feature | Python | Node | Kotlin |
+|---------|:------:|:----:|:------:|
+| Sync API | ✅ | ✅ | ✅ |
+| Async API | ✅ | ✅ (native) | ✅ |
+| Auto-pagination | ❌ (manual) | ✅ (async iterator) | ❌ (manual) |
+| Type hints / generics | ✅ | ✅ (TS) | ✅ |
+| Webhook signature helper | ❌ (use `hmac` stdlib) | ❌ (use `crypto`) | ❌ |
+| Retries on 429/5xx | ✅ (configurable) | ✅ (configurable) | ✅ (configurable) |
+
+For Python and Kotlin, write your own pagination loop. For Node, prefer the async iterator pattern.
