@@ -29,7 +29,7 @@ After installing, open Claude Code and try:
 ### Onboard to the Merge Unified API
 
 ```
-/merge-unified:merge-onboarding
+/merge-onboarding
 ```
 
 Or just describe what you want — Claude will pick the right skill:
