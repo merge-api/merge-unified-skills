@@ -1,12 +1,9 @@
 {
   "name": "merge-unified",
-  "version": "0.2.0",
   "description": "Claude Code skills for integrating with and building on the Merge Unified API",
+  "version": "0.2.0",
   "author": {
     "name": "Merge",
     "email": "support@merge.dev"
-  },
-  "homepage": "https://github.com/merge-api/merge-unified-skills",
-  "repository": "https://github.com/merge-api/merge-unified-skills",
-  "license": "MIT"
+  }
 }

@@ -1,15 +1,18 @@
 {
   "name": "merge-unified-skills",
-  "description": "Claude Code skills for onboarding to the Merge Unified API",
   "owner": {
     "name": "Merge",
     "email": "support@merge.dev"
+  },
+  "metadata": {
+    "description": "Claude Code skills for onboarding to the Merge Unified API"
   },
   "plugins": [
     {
       "name": "merge-unified",
       "source": "./",
       "description": "Claude Code skills for the Merge Unified API",
+      "category": "development",
       "version": "0.2.0",
       "author": {
         "name": "Merge"
