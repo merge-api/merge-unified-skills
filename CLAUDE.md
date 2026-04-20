@@ -8,12 +8,13 @@ A Claude Code plugin packaging skills for the [Merge Unified API](https://docs.m
 
 ## Layout in one paragraph
 
-Plugin metadata in `.claude-plugin/{plugin,marketplace}.json`. Skills under `.claude/skills/<name>/SKILL.md`, with long supporting docs in `<name>/references/*.md`. Validator at `scripts/check-skill.sh`. CI at `.github/workflows/validate-skills.yml`. Reference skeleton for new skills at `.claude/skills/_template/`.
+Plugin metadata in `.claude-plugin/{plugin,marketplace}.json`. Skills under `skills/<name>/SKILL.md` (for the plugin system) and mirrored under `.claude/skills/<name>/SKILL.md` (for manual install). Long supporting docs in `<name>/references/*.md`. Validator at `scripts/check-skill.sh`. CI at `.github/workflows/validate-skills.yml`. Reference skeleton for new skills at `.claude/skills/_template/`.
 
 ## When asked to add a skill
 
-1. Copy `.claude/skills/_template/` to `.claude/skills/<new-skill-name>/`.
-2. Edit `SKILL.md` frontmatter: `name`, `description` (with many trigger phrases), `metadata.author: Merge`, `metadata.version: 0.1.0`.
+1. Copy `.claude/skills/_template/` to `skills/<new-skill-name>/`.
+2. Copy the same to `.claude/skills/<new-skill-name>/` (for manual install path).
+3. Edit `SKILL.md` frontmatter: `name`, `description` (with many trigger phrases), `metadata.author: Merge`, `metadata.version: 0.1.0`.
 3. Move long content into `references/*.md`.
 4. Run `bash scripts/check-skill.sh` before committing.
 5. Bump version in `.claude-plugin/plugin.json` and add a `CHANGELOG.md` entry.

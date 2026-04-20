@@ -19,7 +19,8 @@ If you prefer to add skills directly to a single project:
 
 ```bash
 git clone https://github.com/merge-api/merge-unified-skills.git
-cp -r merge-unified-skills/.claude/skills/ /path/to/your/project/.claude/skills/
+mkdir -p /path/to/your/project/.claude/skills/
+cp -r merge-unified-skills/skills/* /path/to/your/project/.claude/skills/
 ```
 
 ## Getting Started
@@ -29,7 +30,7 @@ After installing, open Claude Code and try:
 ### Onboard to the Merge Unified API
 
 ```
-/merge-onboarding
+/merge-unified:merge-onboarding
 ```
 
 Or just describe what you want — Claude will pick the right skill:
@@ -43,9 +44,9 @@ Or just describe what you want — Claude will pick the right skill:
 
 | Skill | Command | What it does |
 |-------|---------|--------------|
-| **Merge Onboarding** | `/merge-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
-| **Integration Validator** | `/merge-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
-| **Migrate from Apideck** | `/migrate-from-apideck` | Detect Apideck SDK usage, map concepts to Merge equivalents, rewrite API calls, and flag behavioral differences. |
+| **Merge Onboarding** | `/merge-unified:merge-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
+| **Integration Validator** | `/merge-unified:merge-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
+| **Migrate from Apideck** | `/merge-unified:migrate-from-apideck` | Detect Apideck SDK usage, map concepts to Merge equivalents, rewrite API calls, and flag behavioral differences. |
 
 ## What You'll Need
 
