@@ -4,6 +4,18 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-17
+
+### Added
+
+- New skill: `implementing-merge-link` — full Merge Link implementation guide (database schema, backend endpoints, frontend connect button and marketplace UI).
+- New skill: `implementing-merge-sync` — sync trigger implementation via polling and webhooks, covering initial and incremental syncs.
+- New skill: `implementing-merge-post-connection` — post-connection management (settings page, sync status, relinking, configuration, custom fields, HRIS filtering).
+- 15 focused sub-skills covering each implementation step independently:
+  - `merge-link-set-context`, `merge-link-setup-database`, `merge-link-implement-backend`, `merge-link-implement-frontend-connect`, `merge-link-implement-frontend-marketplace`
+  - `merge-sync-set-context`, `merge-sync-implement-initial-polling`, `merge-sync-implement-initial-webhooks`, `merge-sync-implement-subsequent-polling`, `merge-sync-implement-subsequent-webhooks`
+  - `merge-post-connection-set-context`, `merge-post-connection-build-settings-page`, `merge-post-connection-surface-sync-status`, `merge-post-connection-implement-relinking`, `merge-post-connection-configure-integration-settings`, `merge-post-connection-enable-custom-fields`, `merge-post-connection-hris-employee-filtering`
+
 ## [0.2.0] — 2026-04-16
 
 ### Added
