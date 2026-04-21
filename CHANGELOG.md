@@ -4,7 +4,7 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
-## [0.3.0] — 2026-04-17
+## [0.4.0] — 2026-04-20
 
 ### Added
 
