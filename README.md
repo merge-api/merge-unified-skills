@@ -33,12 +33,26 @@ After installing, open Claude Code and try:
 /merge-unified:merge-onboarding
 ```
 
+### Implement Merge Link in your app
+
+```
+/merge-unified:implementing-merge-link
+```
+
+### Set up data syncing
+
+```
+/merge-unified:implementing-merge-sync
+```
+
 Or just describe what you want — Claude will pick the right skill:
 
 - "Add Merge to this project"
 - "Set up an HRIS integration with Merge"
-- "Generate a Merge link_token and open Merge Link"
-- "Why is my Merge API call returning an empty array?"
+- "Implement the Merge Link connect button"
+- "Set up webhook-based syncing with Merge"
+- "Build an integration settings page"
+- "Migrate from Apideck to Merge"
 
 ## Available Skills
 
@@ -47,6 +61,9 @@ Or just describe what you want — Claude will pick the right skill:
 | **Merge Onboarding** | `/merge-unified:merge-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
 | **Integration Validator** | `/merge-unified:merge-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
 | **Migrate from Apideck** | `/merge-unified:migrate-from-apideck` | Detect Apideck SDK usage, map concepts to Merge equivalents, rewrite API calls, and flag behavioral differences. |
+| **Implementing Merge Link** | `/merge-unified:implementing-merge-link` | Full Merge Link implementation: database schema, backend API (link token, token exchange, relink, delete), and frontend UI. Guides you through 5 sub-steps: context loading, database setup, backend endpoints, and frontend (connect button or marketplace). |
+| **Implementing Merge Sync** | `/merge-unified:implementing-merge-sync` | Set up data syncing after a connection is established. Covers initial sync detection and incremental updates via polling or webhooks, with sub-steps for each approach. |
+| **Implementing Post-Connection** | `/merge-unified:implementing-merge-post-connection` | Build the post-connection experience: integration settings page, sync status UI, relinking broken connections, custom field mappings, and HRIS employee filtering. 7 sub-steps covering the full settings surface. |
 
 ## What You'll Need
 
