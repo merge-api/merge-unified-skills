@@ -4,6 +4,19 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-04-27
+
+### Changed
+
+- `oncall-handoff` (v0.3.2): Title format aligned to the team's `@Month Day, Year` convention (e.g. `@April 27, 2026`) — previously `On-Call Handoff — Month Day, Year`. In Notion mode the title is set on the `Handoff date` property and not duplicated in page content.
+- `oncall-handoff` (v0.3.2): Step 6 "Notion mode mechanics" now spells out the required `notion-fetch` → `data_source_id` → `notion-create-pages` flow (instead of the misleading "use database ID as parent"), which the create-pages tool rejects.
+
+## [0.4.1] — 2026-04-27
+
+### Changed
+
+- `oncall-handoff` (v0.3.1): Notion is now the only routine output target. Local markdown file output is reserved as a fallback for when the Notion connector is unreachable. Removed the routine "Notion or local file?" prompt from first activation and the "user explicitly requested local" branch from Step 2.
+
 ## [0.4.0] — 2026-04-20
 
 ### Added

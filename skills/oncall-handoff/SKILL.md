@@ -10,17 +10,16 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.3.2
 ---
 
 # On-Call Handoff Doc Generator
 
 This skill generates an on-call handoff document by pulling incidents from PagerDuty, summarizing them, and writing the result to Notion or a local markdown file. The output mirrors the team's standard "@Today" handoff template.
 
-## Output modes
+## Output
 
-- **Notion mode** (default): Creates or updates a page in the "On-call Handoff Meetings" Notion database.
-- **Local file mode**: Writes a markdown file to disk when Notion MCP is unavailable or when the user explicitly requests it.
+Always write to the "On-call Handoff Meetings" Notion database — create a new page or update an existing one. Local markdown file output is a fallback used **only** when the Notion connector is unreachable. Do not offer local file output as a routine choice, and do not honor a user request for it unless the connector is genuinely down.
 
 ## Timing modes
 
@@ -40,8 +39,8 @@ Do NOT activate for: general PagerDuty queries unrelated to handoff docs, genera
 
 ## First activation: self-introduce
 
-> I'm the On-Call Handoff Doc Generator (v0.3.0). I'll pull PagerDuty incidents and create a handoff doc.
-> What day is it — are we doing a midweek check-in or a Monday handoff? And do you want output to Notion or a local markdown file?
+> I'm the On-Call Handoff Doc Generator (v0.3.2). I'll pull PagerDuty incidents and write the handoff doc to the "On-call Handoff Meetings" Notion database.
+> What day is it — are we doing a midweek check-in or a Monday handoff?
 > Has a handoff doc already been generated for this week? If yes, I'll merge new incident data into it without overwriting your filled-in columns.
 
 ## Service allowlist
@@ -67,16 +66,14 @@ Anything else (`Amazon GuardDuty`, `Agent Handler Backend`, `Gateway`, support s
 
 Convert to ISO 8601 / UTC for PagerDuty API calls. Keep ET versions for display.
 
-### Step 2: Determine output mode and locate target
+### Step 2: Locate the Notion database
 
-If the user explicitly requested local file output ("save to a file", "output as markdown", "write locally"), use **local file mode** and skip to Step 3.
+Search for the "On-call Handoff Meetings" database with `Notion:notion-search` (`content_search_mode: "workspace_search"`). Capture the database ID.
 
-Otherwise, attempt **Notion mode**: search for the "On-call Handoff Meetings" database with `Notion:notion-search` (`content_search_mode: "workspace_search"`). Capture the database ID.
-
-- **Notion MCP unavailable**: Inform the user, switch to local file mode.
-- **Database not found**: Ask if the user wants to provide a different name or fall back to local file.
 - **Database found and today is Monday**: Search inside it for an existing handoff page for this week. If found, plan to update; otherwise plan to create.
 - **Database found and today is not Monday**: Always create a new page.
+- **Database not found**: Ask the user to confirm the exact database name and re-search. Do not fall back to local file mode unless the user explicitly says the database does not exist.
+- **Notion connector unreachable** (search call errors out, not just an empty result): Tell the user the connector is down and fall back to local file mode for this run only.
 
 ### Step 2.5: Check for an existing handoff doc to merge
 
@@ -161,7 +158,7 @@ Nighttime check:
 
 ### Step 6: Write the handoff document
 
-**Title**: `On-Call Handoff — [Month Day, Year]`
+**Title**: `@[Month Day, Year]` (e.g. `@April 27, 2026`). This matches the team's existing handoff page convention. In Notion mode, set this as the `Handoff date` property — the database's title field — and do **not** repeat it as a heading at the top of the page content (Notion renders the property as the page title automatically).
 
 **Filename (local file mode)**: `oncall-handoff-YYYY-MM-DD.md` in the current working directory (or path the user specifies).
 
@@ -201,7 +198,10 @@ Then write the merged doc to `oncall-handoff-YYYY-MM-DD.md` (current week's date
 #### Notion mode mechanics
 
 - **Updating an existing page**: use `Notion:notion-update-page` with the merged content. The merge step above already preserved everything the team filled in — no separate "preserve below the auto-generated sections" logic needed.
-- **Creating a new page**: use `Notion:notion-create-pages` with the database ID as parent.
+- **Creating a new page**:
+  1. **Fetch the database first** with `Notion:notion-fetch` (passing the database URL or ID from Step 2). The response includes `<data-sources>` with one or more `<data-source url="collection://<data_source_id>">` entries — capture the data source ID from that URL.
+  2. Call `Notion:notion-create-pages` with `parent: { type: "data_source_id", data_source_id: "<id from step 1>" }`. Do **not** use `database_id` as the parent type — the create-pages tool rejects it for multi-source databases, and `data_source_id` works uniformly.
+  3. Set the title via the database's title property (`Handoff date` for the "On-call Handoff Meetings" database) to `@[Month Day, Year]`. Pass the page body in `content`; do not include a `# @<date>` heading at the top — Notion adds the title from the property.
 
 ### Step 7: Confirm and share
 
@@ -215,7 +215,7 @@ Then write the merged doc to `oncall-handoff-YYYY-MM-DD.md` (current week's date
 The output document must mirror this structure exactly. Lines marked `[FILL]` are filled by the skill; the rest is static boilerplate the team relies on.
 
 ````markdown
-# On-Call Handoff — [Month Day, Year]    [FILL: today's date]
+# @[Month Day, Year]    [FILL: today's date — local file mode only; in Notion mode, this lives in the `Handoff date` property and is omitted from the page content]
 
 Created time: [Month Day, Year] [HH:MM AM/PM] ET    [FILL: now]
 
