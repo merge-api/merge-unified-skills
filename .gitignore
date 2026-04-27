@@ -7,3 +7,7 @@ dist/
 *.log
 .vscode/
 .idea/
+
+# Project-local MCP server config — engineer-specific paths. Use .mcp.json.example as a template.
+.mcp.json
+!.mcp.json.example
