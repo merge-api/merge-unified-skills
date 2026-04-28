@@ -109,7 +109,7 @@ For canonical install + initialization snippets in Java, Go, Ruby, and C#, see e
 
 ## Multi-Tool Support
 
-Convert all 23 skills to 8 AI coding tools with a single script.
+Convert all 23 skills to 9 AI coding tools with a single script.
 
 | Tool | Format | Install |
 |------|--------|---------|
@@ -118,6 +118,7 @@ Convert all 23 skills to 8 AI coding tools with a single script.
 | Windsurf | `.windsurf/skills/` | `./scripts/convert.sh --tool windsurf --target .` |
 | Kilo Code | `.kilocode/rules/` | `./scripts/convert.sh --tool kilocode --target .` |
 | OpenCode | `.opencode/skills/` | `./scripts/convert.sh --tool opencode --target .` |
+| Codex | `.codex/skills/` | `./scripts/convert.sh --tool codex --target .` |
 | Augment | `.augment/rules/` | `./scripts/convert.sh --tool augment --target .` |
 | Antigravity | `~/.gemini/antigravity/skills/` | `./scripts/convert.sh --tool antigravity --target .` |
 | Hermes Agent | `~/.hermes/skills/` | `./scripts/convert.sh --tool hermes --target .` |

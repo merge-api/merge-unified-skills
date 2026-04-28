@@ -20,7 +20,7 @@ SKILLS_DIR="$REPO_ROOT/skills"
 DIST_DIR="$REPO_ROOT/dist"
 DATE_TODAY=$(date +%Y-%m-%d)
 
-SUPPORTED_TOOLS="cursor aider windsurf kilocode opencode augment antigravity hermes"
+SUPPORTED_TOOLS="cursor aider windsurf kilocode opencode augment antigravity hermes codex"
 
 # ── Argument parsing ──────────────────────────────────────────────
 
@@ -92,6 +92,7 @@ get_outdir() {
       augment)      echo "$target_abs/.augment/rules" ;;
       antigravity)  echo "$target_abs/.gemini/antigravity/skills" ;;
       hermes)       echo "$target_abs/.hermes/skills" ;;
+      codex)        echo "$target_abs/.codex/skills" ;;
     esac
   else
     case "$tool" in
@@ -103,6 +104,7 @@ get_outdir() {
       augment)      echo "$DIST_DIR/augment/rules" ;;
       antigravity)  echo "$DIST_DIR/antigravity/skills" ;;
       hermes)       echo "$DIST_DIR/hermes/skills" ;;
+      codex)        echo "$DIST_DIR/codex/skills" ;;
     esac
   fi
 }
@@ -400,6 +402,29 @@ KCEOF
   echo "  Kilo Code: $(ls "$outdir"/*.md 2>/dev/null | wc -l | tr -d ' ') rule files → $outdir/"
 }
 
+convert_codex() {
+  local outdir
+  outdir="$(get_outdir codex)"
+  rm -rf "$outdir"
+  mkdir -p "$outdir"
+
+  while IFS= read -r -d '' skill; do
+    local name dir
+    dir="$(dirname "$skill")"
+    name="$(basename "$dir")"
+
+    mkdir -p "$outdir/$name"
+    cp "$skill" "$outdir/$name/SKILL.md"
+
+    if [ -d "$dir/references" ]; then
+      cp -r "$dir/references" "$outdir/$name/references"
+    fi
+
+  done < <(find "$SKILLS_DIR" -maxdepth 2 -name SKILL.md -not -path "*/_template/*" -print0)
+
+  echo "  Codex: $(find "$outdir" -name SKILL.md | wc -l | tr -d ' ') skills → $outdir/"
+}
+
 # ── Main ──────────────────────────────────────────────────────────
 
 run_conversion() {
@@ -413,6 +438,7 @@ run_conversion() {
     augment)      convert_augment ;;
     antigravity)  convert_antigravity ;;
     hermes)       convert_hermes ;;
+    codex)        convert_codex ;;
     *)            echo "Unknown tool: $tool"; exit 1 ;;
   esac
 }
