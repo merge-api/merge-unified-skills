@@ -728,12 +728,12 @@ def sync_employees_incremental(account_token, last_sync_time=None):
 #### Example API Usage Patterns
 
 **Initial Sync (no modified_after)**:
-```
+```text
 GET /hris/v1/employees
 ```
 
 **Incremental Sync (with modified_after)**:
-```
+```text
 GET /hris/v1/employees?modified_after=2024-01-15T10:30:00Z
 ```
 
@@ -757,7 +757,7 @@ def sync_all_hris_data_incremental(integration):
 
 **Solution with Start Time**: Using the start timestamp ensures complete coverage with potential overlap (which is safer than gaps).
 
-```
+```text
 Sync 1: Start 10:00, End 10:05, Store: 10:00
 Sync 2: modified_after=10:00, Start 10:15, End 10:18, Store: 10:15
 ```
@@ -816,7 +816,7 @@ def sync_data_if_needed(integration):
 #### Efficiency Benefits of modified_after
 
 **Without modified_after** (inefficient):
-```
+```text
 GET /hris/v1/employees
 → Returns all 500 employees every time
 → Wastes bandwidth and processing
@@ -824,7 +824,7 @@ GET /hris/v1/employees
 ```
 
 **With modified_after** (efficient):
-```
+```text
 GET /hris/v1/employees?modified_after=2024-01-15T10:30:00Z
 → Returns only 3 employees that changed since last sync
 → Minimal bandwidth and processing
@@ -1237,7 +1237,7 @@ def create_link_token(user, category):
 ##### Why This Matters
 
 **Without this logic (WRONG):**
-```
+```text
 User clicks "Connect" → New UUID → "pending" record created
 User exits modal → Orphaned "pending" record + Incomplete account in Merge
 User clicks "Connect" again → NEW UUID → NEW "pending" record created
@@ -1246,7 +1246,7 @@ Result: 2 pending records in your DB, 2 incomplete accounts in Merge dashboard
 ```
 
 **With this logic (CORRECT):**
-```
+```text
 User clicks "Connect" → New UUID → "pending" record created
 User exits modal → Record stays "pending"
 User clicks "Connect" again → SAME UUID reused → Same record found
@@ -1256,7 +1256,7 @@ Result: 1 clean record in your DB, 1 complete account in Merge dashboard
 
 ##### Visual Flow Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    User First Attempt                            │
 └─────────────────────────────────────────────────────────────────┘

@@ -96,7 +96,7 @@ Merge provides the `GET /api/{category}/v1/sync-status` endpoint to monitor sync
 
 **Critical Timing**: The `is_initial_sync` flag flips to `false` immediately upon first completion, not after a second sync.
 
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -120,7 +120,7 @@ After initial sync completes, subsequent syncs can accept partial data since you
 **Subsequent Sync is Ready When:**
 - `status == "DONE"` **OR** `status == "PARTIALLY_SYNCED"` **OR** `is_initial_sync == false`
 
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -168,7 +168,7 @@ You must track **two separate timestamps** per model. Confusing them causes data
 
 **Why store start time, not end time**: Using the start timestamp ensures complete coverage with potential overlap (which is safer than gaps). Records modified during your fetch window are captured in both syncs rather than potentially missed.
 
-```
+```text
 Sync 1: Start 10:00, End 10:05, Store last_synced_at: 10:00
 Sync 2: modified_after=10:00, Start 10:15, End 10:18, Store last_synced_at: 10:15
 ```
@@ -180,7 +180,7 @@ Sync 2: modified_after=10:00, Start 10:15, End 10:18, Store last_synced_at: 10:1
 After the initial sync, use `modified_after` and `modified_before` together to fetch only records that changed within a specific time window.
 
 **Pattern**:
-```
+```text
 GET /api/{category}/v1/{model}?modified_after=2024-01-15T10:30:00Z&modified_before=2024-01-15T22:46:41Z
 ```
 
@@ -188,7 +188,7 @@ GET /api/{category}/v1/{model}?modified_after=2024-01-15T10:30:00Z&modified_befo
 - `modified_before` = Merge's `last_sync_finished` — creates a bounded upper boundary
 
 **Example Flow**:
-```
+```text
 # Initial state: No previous fetch
 Poll /sync-status → last_sync_finished = 2024-01-15T10:30:00Z
 Detect: New data available (first fetch)
@@ -305,7 +305,7 @@ Best for **granular, model-specific** sync notifications during subsequent syncs
 
 ### Webhook Processing Pattern
 
-```
+```text
 1. Receive webhook with sync_status data
 2. Extract last_sync_finished timestamp
 3. Compare with your stored last_sync_finished

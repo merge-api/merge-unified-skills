@@ -397,7 +397,7 @@ dotnet add package Merge.Client
 ```
 
 Or via NuGet Package Manager:
-```
+```shell
 Install-Package Merge.Client
 ```
 

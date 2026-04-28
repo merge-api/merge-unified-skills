@@ -26,7 +26,7 @@ Configure: **https://app.merge.dev/configuration/webhooks â†’ Third Party tab â†
 
 Every Merge webhook POST has this shape:
 
-```json
+```javascript
 {
   "hook": {
     "id": "webhook-config-uuid",

@@ -235,7 +235,7 @@ const accountToken = accountResponse.accountToken;
 ```
 
 The two-step token flow:
-```
+```text
 link_token (30 min, server-generated)
   ↓ used by Merge Link in frontend
 public_token (one-time, from onSuccess)

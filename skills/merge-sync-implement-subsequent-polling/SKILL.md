@@ -24,7 +24,7 @@ Wait for confirmation before continuing.
 
 ## New Database Table: sync_state
 
-```
+```text
 sync_state
 - linked_account_id   FK to linked_accounts
 - model_id            e.g. "hris.Employee"
@@ -49,7 +49,7 @@ sync_state
 
 For each linked account where `initial_sync_complete = true`, call `GET https://api.merge.dev/api/{category}/v1/sync-status`:
 
-```
+```text
 for each model in sync_status.results:
     skip if model.status in ["DISABLED", "FAILED"] or model.is_initial_sync == true
 
@@ -65,7 +65,7 @@ for each model in sync_status.results:
 
 ### 2. Incremental Fetch
 
-```
+```text
 function fetch_incremental(model, stored):
     # Step 1: Record YOUR fetch start time BEFORE fetching
     last_synced_at = now()
@@ -101,7 +101,7 @@ Stored: `last_synced_at = 2024-01-15T10:35:00Z`, `merge_last_sync_finished = 202
 
 Poll returns: `last_sync_finished = 2024-01-15T22:46:41Z` → `22:46 > 10:30` = NEW DATA
 
-```
+```text
 # Record start time BEFORE fetching
 last_synced_at = 2024-01-15T22:50:00Z
 GET https://api.merge.dev/api/employees?modified_after=2024-01-15T10:35:00Z&modified_before=2024-01-15T22:46:41Z

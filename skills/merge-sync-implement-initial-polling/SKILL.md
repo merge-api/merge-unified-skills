@@ -32,7 +32,7 @@ Implement a scheduled polling job that detects initial sync completion for all a
 
 ### Job Logic
 
-```
+```text
 every {configured interval}:
   accounts = query linked_accounts WHERE initial_sync_complete = false AND account_token IS NOT NULL
 
@@ -54,7 +54,7 @@ every {configured interval}:
 
 ### Readiness Check Logic
 
-```
+```text
 function check_readiness(models):
   for each model in models:
     if model.status == "DISABLED":
