@@ -107,6 +107,42 @@ const employees = await merge.hris.employees.list();
 
 For canonical install + initialization snippets in Java, Go, Ruby, and C#, see each SDK's repo README (linked above).
 
+## Multi-Tool Support
+
+Convert all 23 skills to 8 AI coding tools with a single script.
+
+| Tool | Format | Install |
+|------|--------|---------|
+| Cursor | `.cursor/rules/` | `./scripts/convert.sh --tool cursor --target .` |
+| Aider | `CONVENTIONS.md` | `./scripts/convert.sh --tool aider --target .` |
+| Windsurf | `.windsurf/skills/` | `./scripts/convert.sh --tool windsurf --target .` |
+| Kilo Code | `.kilocode/rules/` | `./scripts/convert.sh --tool kilocode --target .` |
+| OpenCode | `.opencode/skills/` | `./scripts/convert.sh --tool opencode --target .` |
+| Augment | `.augment/rules/` | `./scripts/convert.sh --tool augment --target .` |
+| Antigravity | `~/.gemini/antigravity/skills/` | `./scripts/convert.sh --tool antigravity --target .` |
+| Hermes Agent | `~/.hermes/skills/` | `./scripts/convert.sh --tool hermes --target .` |
+
+### How it works
+
+```bash
+# 1. Convert all skills to all tools (takes ~15 seconds)
+./scripts/convert.sh --tool all
+
+# 2. Or install directly into your project for a specific tool
+./scripts/convert.sh --tool cursor --target /path/to/your/project
+
+# 3. Or generate tool-specific outputs locally
+./scripts/convert.sh --tool aider
+```
+
+Each tool gets:
+- All 23 skills converted to native format
+- Per-tool README with installable/pluggable steps
+- Reference docs preserved alongside skills
+- Zero manual conversion work
+
+Run `./scripts/convert.sh --list` to see all supported tools.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new skill, the PR workflow, and the publish playbook.
