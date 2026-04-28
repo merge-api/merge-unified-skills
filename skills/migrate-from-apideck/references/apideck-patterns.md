@@ -102,7 +102,7 @@ const { data } = await apideck.crm.contactsAll({ serviceId: "salesforce" });
 ## Environment variables
 
 Common Apideck env var names to search for:
-```
+```text
 APIDECK_API_KEY
 APIDECK_APP_ID
 APIDECK_CONSUMER_ID
@@ -114,7 +114,7 @@ APIDECK_SERVICE_ID
 **Base URL:** `https://unify.apideck.com`
 
 **Headers to detect:**
-```
+```text
 x-apideck-app-id: ...
 x-apideck-consumer-id: ...
 x-apideck-service-id: ...
@@ -141,7 +141,7 @@ Migrate to: Merge Link (`@mergeapi/react-merge-link` or vanilla JS). See `merge-
 ## Package file patterns
 
 **Python (requirements.txt / pyproject.toml):**
-```
+```text
 apideck-unify>=...
 apideck>=...
 ```
@@ -153,11 +153,11 @@ apideck>=...
 ```
 
 **Java (build.gradle / pom.xml):**
-```
+```text
 com.apideck:sdk-java
 ```
 
 **Go (go.mod):**
-```
+```text
 github.com/apideck-libraries/sdk-go
 ```

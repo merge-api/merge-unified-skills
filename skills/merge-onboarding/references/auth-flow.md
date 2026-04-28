@@ -4,7 +4,7 @@ The full lifecycle of every token Merge uses, from the first link to long-lived 
 
 ## Three tokens, three lifetimes
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │  API key                                                            │
 │  ─ Created in dashboard, identifies your organization               │

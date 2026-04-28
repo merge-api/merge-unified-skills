@@ -29,7 +29,7 @@ Apply filters inside your sync logic **before** writing records to your DB. Each
 
 Example query:
 
-```
+```text
 GET /hris/v1/employees?employment_status=ACTIVE
 ```
 

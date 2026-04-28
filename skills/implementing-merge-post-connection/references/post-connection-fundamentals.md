@@ -603,7 +603,7 @@ A common use case among Merge customers using HRIS integrations is letting end-u
 
 If this example used Merge API filters (pre-storage) approach, the query to the `/employees` endpoint would be:
 
-```
+```text
 GET {base_url}/employees?employment_type=FULL_TIME&groups={group uuid 1},{group uuid 2}
 ```
 

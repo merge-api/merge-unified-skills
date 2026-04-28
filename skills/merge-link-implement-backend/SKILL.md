@@ -63,7 +63,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 **Account details response is flat.** Integration info is at the top level of the response object:
 
-```
+```text
 # CORRECT
 integration_name = account_details.get("integration")       # "BambooHR"
 integration_slug = account_details.get("integration_slug")  # "bamboohr"
