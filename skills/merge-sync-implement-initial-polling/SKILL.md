@@ -73,6 +73,14 @@ function check_readiness(models):
 - Log errors per linked account but continue polling others
 - Do NOT stop the polling job after initial sync completes — it will be reused for subsequent sync detection
 
+**Rate limit (429) handling:**
+- If `GET /sync-status` returns 429, back off with exponential delay + random jitter (e.g., 1s + random(0–500ms), 2s + jitter, 4s + jitter)
+- Max 3 retries per account per poll cycle — if still 429, skip that account and move to the next
+- If multiple accounts hit 429 in the same cycle, increase the overall poll interval (e.g., 5 min → 15 min) until the next cycle succeeds without rate limits
+
+**401 handling:**
+- If `GET /sync-status` returns 401, the account_token is invalid or revoked — log as a relink-needed event, do NOT retry (retrying won't help)
+
 ## Critical Gotchas
 
 - **Use OR logic**: `status == "DONE" OR is_initial_sync == false` — using AND misses cases where Merge marks old syncs as non-initial before completion

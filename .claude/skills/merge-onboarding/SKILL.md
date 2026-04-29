@@ -235,7 +235,7 @@ const accountToken = accountResponse.accountToken;
 ```
 
 The two-step token flow:
-```
+```text
 link_token (30 min, server-generated)
   ↓ used by Merge Link in frontend
 public_token (one-time, from onSuccess)
@@ -301,9 +301,11 @@ def verify_merge_webhook(payload_bytes: bytes, signature: str, secret: str) -> b
 
 Detailed webhook setup, event types, and Node example: `references/webhooks.md`.
 
+⚠️ **Verify the signature on EVERY incoming webhook before processing the payload.** Even valid-looking webhooks can be forged. Run the verification function above before dispatching to your background job handler.
+
 ## Step 8: Production checklist
 
-Before going live, verify these 8 items (mirrors the in-app checklist):
+Before going live, verify these 10 items:
 
 1. **[Frontend]** Embed Merge Link in your app
 2. **[Frontend]** Generate link_tokens from your backend
@@ -311,10 +313,12 @@ Before going live, verify these 8 items (mirrors the in-app checklist):
 4. **[Backend]** Map Common Model fields to your database
 5. **[Configuration]** Configure Common Model scopes for production at `/configuration/common-model-scopes`
 6. **[Testing]** Test with a production Linked Account (not just sandbox)
-7. **[Backend]** Handle API errors and rate limits (see `references/auth-flow.md`)
-8. **[Frontend]** Design the re-connect flow for broken connections (Linked Accounts can disconnect when end-users revoke access)
+7. **[Backend]** Handle rate limits (429) with exponential backoff on all Merge API calls
+8. **[Backend]** Verify webhook signatures (HMAC-SHA256) on every incoming webhook
+9. **[Backend]** Handle API errors gracefully (401, 500, timeouts) with actionable messages — not generic "something went wrong"
+10. **[Frontend]** Design the re-connect flow for broken connections (Linked Accounts can disconnect when end-users revoke access)
 
-When all 8 are done, switch your API key from `test_xxx` to `production_xxx` and ship.
+When all 10 are done, switch your API key from `test_xxx` to `production_xxx` and ship.
 
 ## Common Model reference (quick)
 

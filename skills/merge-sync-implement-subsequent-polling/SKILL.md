@@ -116,6 +116,15 @@ last_synced_at = 2024-01-15T22:50:00Z, merge_last_sync_finished = 2024-01-15T22:
 - First subsequent fetch: `last_synced_at` is null — omit `modified_after`, use only `modified_before`
 - Always store BOTH timestamps after success — storing only one breaks the next detection cycle
 
+## Rate Limit Handling
+
+Apply the same pattern to both `GET /sync-status` and the data fetch calls:
+
+- **429 response** → exponential backoff with jitter (1s, 2s, 4s + random 0–500ms), max 3 retries
+- **Per-model handling**: if one model's data fetch hits 429, skip it and continue fetching other models for that account — the skipped model will be picked up on the next poll cycle (its `sync_state` timestamps won't be updated, so it'll still show as having new data)
+- **Polling frequency adjustment**: if rate limits are frequent across multiple accounts, increase the poll interval temporarily
+- **Do NOT update timestamps on failure** — if the fetch fails or is skipped due to 429, leave `last_synced_at` and `merge_last_sync_finished` unchanged so the next cycle retries the same window
+
 ## Testing Checklist
 
 - [ ] Detects new data by comparing Merge's `last_sync_finished` with stored value
@@ -127,3 +136,5 @@ last_synced_at = 2024-01-15T22:50:00Z, merge_last_sync_finished = 2024-01-15T22:
 - [ ] Skips DISABLED and FAILED models
 - [ ] Handles pagination in responses
 - [ ] Tracks state independently per model (one row per linked_account + model_id)
+- [ ] Retries on 429 with exponential backoff
+- [ ] Does NOT update timestamps on failed/skipped fetches

@@ -63,7 +63,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 **Account details response is flat.** Integration info is at the top level of the response object:
 
-```
+```text
 # CORRECT
 integration_name = account_details.get("integration")       # "BambooHR"
 integration_slug = account_details.get("integration_slug")  # "bamboohr"
@@ -76,6 +76,35 @@ integration_name = account_details["integration"]["name"]   # TypeError
 
 **Delete uses POST, not HTTP DELETE.** Merge's delete-account endpoint is `POST /delete-account`, not `DELETE /linked-accounts/{id}`.
 
+## Error Handling and Rate Limits
+
+Wrap every Merge API call in error handling. Merge returns standard HTTP status codes:
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `200` | Success | Process the response |
+| `401` | API key or account_token invalid | Surface to user: "Check your API key" or trigger relink flow |
+| `429` | Rate limited | Retry with exponential backoff (1s, 2s, 4s), max 3 retries |
+| `500` | Merge server error | Retry once after 2s, then fail gracefully with a user-facing message |
+
+**Rate limit retry pattern:**
+
+```python
+import time
+
+def merge_api_call(method, url, headers, **kwargs):
+    for attempt in range(3):
+        resp = getattr(requests, method)(url, headers=headers, **kwargs)
+        if resp.status_code == 429:
+            retry_after = int(resp.headers.get("Retry-After", 2 ** attempt))
+            time.sleep(retry_after)
+            continue
+        return resp
+    return resp  # Return last response even if still 429
+```
+
+**Idempotence on failure:** If `create-link-token` fails after the DB record is created, the record stays as `status = "pending"`. The next attempt finds the existing pending record and reuses it — no duplicate is created. This is by design.
+
 ## Testing Checklist
 
 - [ ] Create link token returns a valid token
@@ -85,3 +114,5 @@ integration_name = account_details["integration"]["name"]   # TypeError
 - [ ] Relink returns fresh token without creating a new DB record
 - [ ] Delete removes from both Merge and local DB
 - [ ] All four endpoints require authentication
+- [ ] API calls retry on 429 with exponential backoff
+- [ ] 401 errors surface an actionable message (not a generic 500)
