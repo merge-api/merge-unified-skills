@@ -112,7 +112,9 @@ Required fields (`EndUserDetailsRequest`):
 - `end_user_email_address` — your customer's email
 - `end_user_organization_name` — your customer's company name
 - `end_user_origin_id` — your unique ID for this customer (we recommend their user ID in your system)
-- `categories` — array of categories this Linked Account can access, e.g. `["filestorage"]`
+- `categories` — array of categories this Linked Account can access, e.g. `["hris"]`
+
+> **Note:** All examples below use the developer's chosen category. Replace `hris` with `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, or `mktg` as needed. The SDK method path matches the category: `merge.hris.link_token.create(...)`, `merge.ats.link_token.create(...)`, etc.
 
 Optional:
 - `integration` — pre-select a single provider (skip the integration picker)
@@ -124,11 +126,11 @@ from merge import Merge
 
 merge = Merge(api_key="YOUR_TEST_KEY")
 
-response = merge.filestorage.link_token.create(
+response = merge.hris.link_token.create(
     end_user_email_address="alice@acme.com",
     end_user_organization_name="Acme Corp",
     end_user_origin_id="user_123",
-    categories=["filestorage"],
+    categories=["hris"],
 )
 print(response.link_token)
 ```
@@ -139,11 +141,11 @@ import { MergeClient } from "@mergeapi/merge-node-client";
 
 const merge = new MergeClient({ apiKey: "YOUR_TEST_KEY" });
 
-const response = await merge.filestorage.linkToken.create({
+const response = await merge.hris.linkToken.create({
   endUserEmailAddress: "alice@acme.com",
   endUserOrganizationName: "Acme Corp",
   endUserOriginId: "user_123",
-  categories: ["filestorage"],
+  categories: ["hris"],
 });
 console.log(response.linkToken);
 ```
@@ -201,20 +203,36 @@ function ConnectButton({ linkToken }: { linkToken: string }) {
 ```html
 <script src="https://cdn.merge.dev/initialize.js"></script>
 <script>
-  const link = MergeLink.initialize({
+  MergeLink.initialize({
     linkToken: "YOUR_LINK_TOKEN",
+    onReady: () => {
+      MergeLink.openLink();  // Must wait for onReady — openLink() before ready silently fails
+    },
     onSuccess: (publicToken) => {
       fetch("/api/merge/exchange", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicToken }),
       });
     },
+    onExit: () => console.log("User closed Merge Link"),
   });
-  link.openLink();
 </script>
 ```
 
+⚠️ **`initialize()` is async.** The link is NOT immediately ready to open. Always use the `onReady` callback to call `openLink()`. Calling `openLink()` before `onReady` fires results in an invisible iframe (the modal loads but never becomes visible). Available callbacks: `onReady`, `onSuccess(publicToken)`, `onExit`, `onValidationError(error)`.
+
 When the user finishes the flow, `onSuccess` fires with a **public_token**. This is a one-time token. Send it to your backend immediately to exchange for the long-lived `account_token`.
+
+### Testing without real provider credentials
+
+In test mode, Merge Link still requires real authentication against the selected provider (e.g., real BambooHR credentials). For local development without real provider access:
+
+1. **Create a Test Linked Account** from https://app.merge.dev/linked-accounts/test — this gives you a pre-connected account with sample data, no real provider credentials needed
+2. Copy the `account_token` from the dashboard and insert it directly into your database
+3. Skip Steps 4-5 and go straight to Step 6 to test your API calls against the sample data
+
+You can also use the **"Test" integration** inside Merge Link — it's a built-in test provider that accepts any credentials.
 
 ## Step 5: Exchange public_token for account_token (backend)
 
@@ -224,19 +242,61 @@ The `account_token` is the long-lived credential that authenticates all future A
 
 Endpoint: `GET https://api.merge.dev/api/integrations/account-token/{public_token}`
 
-**Python:**
+**Response schema** (the `AccountToken` object returned by the SDK):
+
+| Field | Type | Notes |
+|---|---|---|
+| `account_token` | string | The long-lived credential — store this |
+| `integration` | SDK model object | Has `.name` (string), `.categories` (list). **Not a dict** — use `.name` to get the string, or `.model_dump()` (Python) / spread operator (Node) to serialize |
+| `id` | string (UUID) | Merge's ID for this Linked Account |
+
+⚠️ **The response does NOT contain `end_user_origin_id`.** To match back to the pending record you created in Step 3, either (a) pass the `end_user_origin_id` from the frontend alongside the `public_token`, or (b) look up the most recent pending record for the current user.
+
+**Python — complete exchange handler:**
 ```python
-account_response = merge.filestorage.account_token.retrieve(public_token=public_token)
-account_token = account_response.account_token
-# Save to your DB: customer.merge_account_token = account_token
+@app.route("/api/merge/exchange", methods=["POST"])
+def exchange_token():
+    data = request.json
+    public_token = data["public_token"]
+    end_user_origin_id = data["end_user_origin_id"]  # Pass from frontend alongside public_token
+
+    # Exchange the one-time public_token for a long-lived account_token
+    result = merge.hris.account_token.retrieve(public_token=public_token)
+
+    # Update the pending record from Step 3
+    linked = LinkedAccount.query.filter_by(
+        end_user_origin_id=end_user_origin_id, status="pending"
+    ).first()
+    linked.account_token = result.account_token
+    linked.integration_name = result.integration.name  # .name is a string, .integration is an SDK object
+    linked.status = "active"
+    db.session.commit()
+
+    return jsonify({"status": "connected", "integration": result.integration.name})
 ```
 
-**Node:**
+**Node — complete exchange handler:**
 ```typescript
-const accountResponse = await merge.filestorage.accountToken.retrieve(publicToken);
-const accountToken = accountResponse.accountToken;
-// Save to your DB: customer.mergeAccountToken = accountToken
+app.post("/api/merge/exchange", async (req, res) => {
+  const { publicToken, endUserOriginId } = req.body;
+
+  const result = await merge.hris.accountToken.retrieve(publicToken);
+
+  // Update the pending record from Step 3
+  await db.linkedAccounts.update(
+    { endUserOriginId, status: "pending" },
+    {
+      accountToken: result.accountToken,
+      integrationName: result.integration?.name,  // .name is a string
+      status: "active",
+    }
+  );
+
+  res.json({ status: "connected", integration: result.integration?.name });
+});
 ```
+
+> **SDK objects vs JSON:** `result.integration` is an SDK model (pydantic in Python, typed object in Node), not a plain dict. Use `result.integration.name` for the string name. Don't pass the raw object to `jsonify()` or `JSON.stringify()` — it won't serialize. Use `.model_dump()` (Python) or spread `{ ...result.integration }` (Node) if you need the full object as JSON.
 
 The two-step token flow:
 ```text
@@ -255,13 +315,13 @@ Two headers required on every Unified API call:
 
 The SDKs handle this when you pass the account_token at client init.
 
-**Python (File Storage example):**
+**Python (HRIS example):**
 ```python
 merge = Merge(api_key="YOUR_TEST_KEY", account_token=account_token)
 
-files = merge.filestorage.files.list()
-for file in files.results:
-    print(file.name, file.mime_type, file.size)
+employees = merge.hris.employees.list()
+for emp in employees.results:
+    print(emp.first_name, emp.last_name, emp.work_email)
 ```
 
 **Node (HRIS example):**
@@ -378,6 +438,12 @@ Format: **SYMPTOM** / **CAUSE** / **FIX**.
 **SYMPTOM:** Linked Account shows as "relink_needed" or "incomplete".
 **CAUSE:** End-user revoked access in the source provider, or credentials expired.
 **FIX:** Trigger your re-connect flow. Generate a new link_token with the existing `end_user_origin_id` and re-open Merge Link. The user re-authorizes and the existing Linked Account is updated (no new account_token).
+
+---
+
+**SYMPTOM:** `400 Bad Request` with "Organization has already reached their maximum number of test accounts."
+**CAUSE:** Free/test tier has a cap on simultaneous test Linked Accounts.
+**FIX:** Delete unused test Linked Accounts at https://app.merge.dev/linked-accounts/test, then retry.
 
 ---
 
