@@ -83,7 +83,7 @@ Pick the language. Detailed code in `references/sdk-quickstarts.md`.
 
 **Python:**
 ```bash
-pip install MergePythonClient
+pip install "MergePythonClient>=2.0.0"
 ```
 
 **Node.js / TypeScript:**
@@ -166,6 +166,8 @@ curl -X POST https://api.merge.dev/api/integrations/create-link-token \
 
 ⚠️ **NEVER do this in production.** API keys exposed in the browser leak all your customer data. Move to a real backend before launching.
 
+⚠️ **Before calling the Merge API to generate a link_token**, create a record in your database with `status = "pending"` and the `end_user_origin_id` you're about to send. This prevents duplicate accounts if the user opens Merge Link multiple times. The `account_token` column should be **nullable** — it won't have a value until the exchange completes in Step 5. The record stays as "pending" until then.
+
 ## Step 4: Open Merge Link (frontend) — the magical moment
 
 This is where the developer sees the magic: paste the snippet, see Merge Link open with the provider picker.
@@ -217,6 +219,8 @@ When the user finishes the flow, `onSuccess` fires with a **public_token**. This
 ## Step 5: Exchange public_token for account_token (backend)
 
 The `account_token` is the long-lived credential that authenticates all future API calls for this Linked Account. **Store it securely in your database, keyed by your customer ID.** Never expose it to the browser.
+
+**The `account_token` column must be nullable** — it doesn't exist until this exchange completes. If you created a pending record in Step 3 (recommended), update that record here: set `account_token` and change `status` from `"pending"` to `"active"`.
 
 Endpoint: `GET https://api.merge.dev/api/integrations/account-token/{public_token}`
 
