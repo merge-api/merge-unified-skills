@@ -27,7 +27,7 @@ After users connect via Merge Link, Merge begins syncing data from their third-p
 
 - Completed Merge Link implementation (`linked_accounts` table exists with `account_token` column)
 - `initial_sync_complete` boolean column in `linked_accounts` table (default: `false`)
-- `MERGE_WEBHOOK_SECRET` in `.env` (get from Merge Dashboard — required for webhook steps)
+- `MERGE_WEBHOOK_SECRET` in `.env` (get from Merge Dashboard — required only for webhook steps 2b/3b, not needed for polling)
 - Mapped Merge common models to your destination tables
 - Decided: which Merge common models to use, how they map to your schema, how to handle unique identifiers and deletes
 
@@ -51,6 +51,8 @@ Work through these steps in order. Each step invokes a focused sub-skill.
      Handles Merge's `SYNC_FINISHED` webhook to trigger incremental data fetches automatically.
 
 > Start with polling (Steps 2a + 3a) to validate your integration, then layer in webhooks for production. Both can run simultaneously — polling acts as a safety net if webhooks are delayed or missed.
+
+> **Even if you choose polling only:** consider adding a basic webhook endpoint later. Webhooks give real-time sync detection (seconds vs minutes), and polling continues as a safety net for any missed webhook events. The two approaches complement each other.
 
 ## Troubleshooting
 
