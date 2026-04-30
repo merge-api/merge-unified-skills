@@ -1,6 +1,6 @@
 ---
 name: merge-onboarding
-description: Step-by-step onboarding for the Merge Unified API. Use when a developer says "set up Merge", "integrate Merge", "Merge Unified API", "create a Linked Account", "Merge Link", "generate a link token", "exchange account token", "integrate Google Drive", "integrate Notion", "integrate Workday", "pull HRIS data", "sync employee data", "sync candidate data", "sync CRM contacts", "sync invoices", "sync tickets", "sync files", or asks how to connect to HRIS, ATS, CRM, Accounting, Ticketing, File Storage, Knowledge Base, or Marketing systems via a single unified API. Covers signup → first API call → Merge Link integration → webhooks → production checklist. Embeds real Common Model schemas, SDK install snippets, the link_token → account_token auth flow, and webhook verification code.
+description: Step-by-step onboarding for the Merge Unified API. Use when a developer says "set up Merge", "integrate Merge", "Merge Unified API", "create a Linked Account", "Merge Link", "generate a link token", "exchange account token", "pull HRIS data", "sync employee data", "sync candidate data", "sync CRM contacts", "sync invoices", "sync tickets", "sync files", or asks how to connect to HRIS, ATS, CRM, Accounting, Ticketing, File Storage, Knowledge Base, or Marketing systems via a single unified API. Covers signup → first API call → Merge Link integration → webhooks → production checklist.
 license: MIT
 metadata:
   author: Merge
@@ -15,7 +15,7 @@ Get a developer from Merge signup to a working production Linked Account. The he
 
 Activate when a developer asks anything that maps to integrating the Merge Unified API:
 - "Help me set up Merge for [HRIS / ATS / CRM / Accounting / Ticketing / File Storage / Knowledge Base / Marketing]"
-- "How do I integrate [Google Drive / Notion / Workday / BambooHR / Salesforce / HubSpot / Jira / Zendesk / QuickBooks / etc.]" (these all map to Merge Common Models)
+- "How do I integrate [any third-party SaaS platform]" (if the platform falls under a Merge category, this skill applies)
 - "Generate a link_token", "exchange a public_token", "use account_token"
 - "Embed Merge Link", "use @mergeapi/react-merge-link"
 - "Set up webhooks for sync events"
@@ -36,16 +36,18 @@ When this skill activates for the first time in a conversation, say:
 
 | Category | Providers (examples) | Primary Common Model |
 |----------|----------------------|---------------------|
-| **HRIS** | Workday, BambooHR, ADP, Gusto, Rippling | `Employee` |
-| **ATS** | Greenhouse, Lever, Workable, Ashby | `Candidate` |
-| **CRM** | Salesforce, HubSpot, Pipedrive | `Contact` |
-| **Accounting** | QuickBooks, Xero, NetSuite, Sage | `Invoice` |
-| **Ticketing** | Jira, Zendesk, Linear, ServiceNow | `Ticket` |
-| **File Storage** | Google Drive, OneDrive, Dropbox, Box, SharePoint | `File` |
-| **Knowledge Base** | Confluence, Notion, Guru, Slab | `Article` |
-| **Marketing** | Mailchimp, HubSpot, ActiveCampaign | `Campaign` |
+| **HRIS** | e.g. Workday, BambooHR, Gusto | `Employee` |
+| **ATS** | e.g. Greenhouse, Lever | `Candidate` |
+| **CRM** | e.g. Salesforce, HubSpot | `Contact` |
+| **Accounting** | e.g. QuickBooks, Xero | `Invoice` |
+| **Ticketing** | e.g. Jira, Zendesk | `Ticket` |
+| **File Storage** | e.g. Google Drive, Dropbox | `File` |
+| **Knowledge Base** | e.g. Confluence, Notion | `Article` |
+| **Marketing** | e.g. Mailchimp, HubSpot | `Campaign` |
 
-**Common Model**: a normalized data shape across providers. Whether the developer connects to Salesforce or HubSpot, they query the same `Contact` shape with the same fields.
+> This is not exhaustive — Merge supports many more providers per category. See the full list at https://merge.dev/integrations.
+
+**Common Model**: a normalized data shape across providers. Whether the developer connects to any HRIS provider, they query the same `Employee` shape with the same fields.
 
 **Linked Account**: one end-customer's connection to one provider. Each Linked Account has an `account_token` that authenticates API calls for that customer's data.
 
@@ -63,7 +65,7 @@ Ask the developer (one at a time, **skip questions whose answers are obvious fro
    - Have a test Linked Account, want to go to production
    - Production live, debugging an issue
 
-If they say "I want to integrate Salesforce into my app" → infer CRM category, ask only for SDK language.
+If the developer names a specific provider, infer the category and ask only for SDK language.
 
 ## Step 1: Get your API key
 
