@@ -35,12 +35,13 @@ connectBtn.addEventListener("click", () => {
   fetch("/api/merge/create-link-token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ category: "hris" }), // replace 'hris' with your your actual category
+    body: JSON.stringify({ category: "hris" }), // Replace "hris" with your category: crm, ats, accounting, ticketing, filestorage, knowledgebase, mktg
   })
-    .then((r) => r.json())
+    .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(({ success, link_token, error }) =>
-      success ? openMergeLink(link_token) : (alert(error), resetBtn()),
-    );
+      success ? openMergeLink(link_token) : (alert(error || "Failed to generate link token"), resetBtn()),
+    )
+    .catch((err) => { alert("Network error: " + err.message); resetBtn(); });
 });
 
 function openMergeLink(linkToken) {

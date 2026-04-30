@@ -22,6 +22,25 @@ Extends the existing webhook endpoint to handle `LinkedAccount.sync_completed` e
 - **Option A** (recommended): `LinkedAccount.sync_completed` — one event per sync, all models in one payload; simpler
 - **Option B**: `{CommonModel}.synced` — one event per model; better for high-volume or progressive processing
 
+## Webhook payload for sync events
+
+The `Linked Account synced` webhook delivers:
+
+```javascript
+{
+  "hook": { "event": "Linked Account synced" },
+  "linked_account": { "id": "merge-uuid", "end_user_origin_id": "your_user_id", "category": "crm" },
+  "data": {
+    "sync_status": {
+      "crm.Contact": { "last_sync_finished": "2024-01-15T22:46:41Z", "last_sync_result": "DONE" },
+      "crm.Account": { "last_sync_finished": "2024-01-15T22:46:40Z", "last_sync_result": "DONE" }
+    }
+  }
+}
+```
+
+`data.sync_status` is keyed by model ID. Each entry has `last_sync_finished` (Merge's timestamp) and `last_sync_result` (`DONE`, `PARTIALLY_SYNCED`, or `FAILED`).
+
 ## Implementation
 
 ### Update Background Job
@@ -62,7 +81,7 @@ def process_subsequent_sync(account, payload: dict):
 
         stored = db.query(SyncState).filter_by(linked_account_id=account.id, model_id=model_id).first()
 
-        if stored and webhook_finished <= stored.merge_last_sync_finished:
+        if stored and stored.merge_last_sync_finished and webhook_finished <= stored.merge_last_sync_finished:
             continue  # duplicate or out-of-order — skip automatically
 
         last_synced_at = datetime.utcnow()  # record BEFORE the fetch
@@ -72,7 +91,12 @@ def process_subsequent_sync(account, payload: dict):
             params["modified_after"] = stored.last_synced_at.isoformat()
         # No stored.last_synced_at → first subsequent sync; omit modified_after
 
-        upsert_records(model_id, fetch_merge_model(account, model_id, params))
+        # Fetch changed records using the Merge SDK with bounded window
+        merge = Merge(api_key=os.environ["MERGE_API_KEY"], account_token=account.account_token)
+        category, model_name = model_id.split(".")  # e.g., "crm.Contact" → "crm", "Contact"
+        list_fn = getattr(getattr(merge, category), model_name.lower() + "s")  # merge.crm.contacts
+        results = fetch_all_pages(list_fn, params)  # your pagination helper from Step 6
+        upsert_records(model_id, results)
         upsert_sync_state(account.id, model_id, last_synced_at, webhook_finished)
 ```
 

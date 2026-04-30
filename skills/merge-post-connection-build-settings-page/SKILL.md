@@ -24,7 +24,20 @@ Build a settings page with three core components:
 
 ### Component 1: Connection Health Banner
 
-Fetch account status from `linked_accounts` in your DB, supplemented by `GET https://api.merge.dev/api/{category}/v1/account-details` (with `Authorization` and `X-Account-Token` headers) for live connection health. Render one of three states:
+Fetch account status from `linked_accounts` in your DB, supplemented by `GET https://api.merge.dev/api/{category}/v1/account-details` (with `Authorization` and `X-Account-Token` headers) for live connection health.
+
+**Account-details response** (key fields for health banner):
+
+| Field | Type | Notes |
+|---|---|---|
+| `status` | string | `"COMPLETE"`, `"INCOMPLETE"`, `"RELINK_NEEDED"` |
+| `integration` | string | Provider name (plain string) |
+| `integration_slug` | string | Provider slug |
+| `end_user_origin_id` | string | Your user ID |
+
+⚠️ Wrap this call in error handling — 401 means the account_token is invalid (show "Broken" state + reconnect button). 429 means rate limited (retry with backoff).
+
+Render one of three states:
 
 - **Connected** (green) — auth valid, sync running normally
 - **Needs Attention** (yellow) — partial sync, missing permissions, or degraded access

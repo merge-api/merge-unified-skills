@@ -52,7 +52,21 @@ Prompt the codebase to implement relinking with multiple entry points and clean 
 
 Prompt the codebase to integrate with Merge's Issues API and surface human-readable messages:
 
-> Use `GET https://api.merge.dev/api/{category}/v1/issues?linked_account_id={linked_account_id}` (Merge Issues API) to fetch structured error information for the linked account. For each issue, surface a message that answers: what is broken, who needs to fix it, and what action to take.
+> Use `GET https://api.merge.dev/api/{category}/v1/issues?linked_account_id={linked_account_id}` (Merge Issues API) to fetch structured error information for the linked account.
+>
+> **Issues API response** (each issue):
+>
+> | Field | Type | Notes |
+> |---|---|---|
+> | `id` | string (UUID) | Issue ID |
+> | `status` | string | `ONGOING`, `RESOLVED` |
+> | `error_description` | string | Human-readable error summary |
+> | `error_detail` | string | Specific detail (e.g., missing permission name) |
+> | `first_incident_time` | datetime | When the issue first appeared |
+> | `last_incident_time` | datetime | Most recent occurrence |
+> | `linked_account` | string (UUID) | Linked Account ID |
+>
+> For each issue, surface a message that answers: what is broken, who needs to fix it, and what action to take.
 >
 > Map error categories to the following message patterns:
 >

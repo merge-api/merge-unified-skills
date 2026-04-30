@@ -25,7 +25,21 @@ Implement a Merge webhook endpoint for initial sync detection. This is a securit
 
 ### Step 1: Register Webhook in Merge Dashboard
 
-Subscribe to the `LinkedAccount.sync_completed` event pointing to `POST /api/webhooks/merge` on your server.
+Go to **https://app.merge.dev/configuration/webhooks → Add webhook**. Point it to `POST /api/webhooks/merge` on your server (use ngrok/cloudflared for local dev). Subscribe to `Linked Account synced` events.
+
+### Webhook payload schema
+
+Every Merge webhook delivers this shape:
+
+| Field | Type | Notes |
+|---|---|---|
+| `hook.event` | string | Event type, e.g. `"Linked Account synced"` |
+| `hook.id` | string (UUID) | Webhook config ID |
+| `linked_account.id` | string (UUID) | Merge's Linked Account ID — match to your `merge_account_id` column |
+| `linked_account.end_user_origin_id` | string | The origin ID you sent in link_token creation |
+| `linked_account.integration` | string | Provider slug, e.g. `"salesforce"` |
+| `linked_account.category` | string | e.g. `"crm"` |
+| `data` | object | Event-specific payload (sync metadata for sync events) |
 
 ### Step 2: Webhook Endpoint — `POST /api/webhooks/merge`
 
@@ -53,13 +67,13 @@ def merge_webhook():
         return {"error": "Webhook secret not configured"}, 500
 
     digest = hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()
-    expected = base64.b64encode(digest).decode()
+    expected = base64.urlsafe_b64encode(digest).decode().rstrip("=")
     # Use compare_digest — never plain == (prevents timing attacks)
-    if not hmac.compare_digest(expected, signature):
+    if not hmac.compare_digest(expected, signature.rstrip("=")):
         logger.warning("Merge webhook: invalid signature")
         return {"error": "Invalid signature"}, 401
 
-    process_merge_webhook.delay(request.json)  # queue async job
+    process_merge_webhook.delay(request.get_json())  # queue async job
     return {}, 200
 ```
 

@@ -55,6 +55,16 @@ Gives customers a native mapping UI inside your product.
 ## Implementation — Approach B
 
 1. `GET /api/{category}/v1/remote-fields` — fetch available fields for the linked account
+
+   **Remote fields response** (each entry):
+
+   | Field | Type | Notes |
+   |---|---|---|
+   | `remote_field_name` | string | Field name in the source system |
+   | `remote_field_type` | string | Data type (string, number, boolean) |
+   | `common_model` | string | Which Common Model this field belongs to |
+   | `example_values` | array | Sample values from the source system |
+
 2. Render a list: field name, source system, data type, sample value
 3. Customer toggles which fields to enable and assigns a target name
 4. `POST /api/{category}/v1/field-mappings` — save each enabled field + target mapping
