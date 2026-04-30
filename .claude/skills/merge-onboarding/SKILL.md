@@ -109,7 +109,7 @@ npm install @mergeapi/react-merge-link
 
 ## Step 3: Generate a link_token (backend)
 
-A **link_token** authorizes one Merge Link session for one end-user. Generated server-side with the developer's API key. Expires in **30 minutes**.
+A **link_token** authorizes one Merge Link session for one end-user. Generated server-side with the developer's API key. Default expiry is **30 minutes**; configurable via `link_expiry_mins` (range: 30–720 minutes, up to 10,080 minutes for Magic Link).
 
 Endpoint: `POST https://api.merge.dev/api/integrations/create-link-token`
 
@@ -236,7 +236,7 @@ function ConnectButtonInner({ linkToken }: { linkToken: string }) {
 
 ⚠️ **`initialize()` is async.** Always call `openLink()` inside the `onReady` callback. Calling before `onReady` results in an invisible iframe. Callbacks: `onReady`, `onSuccess(publicToken)`, `onExit`, `onValidationError(error)`.
 
-`onSuccess` fires with a **public_token** — a one-time token (~10 min TTL). Send it and the `end_user_origin_id` to your backend immediately.
+`onSuccess` fires with a **public_token** — a one-time token. Send it and the `end_user_origin_id` to your backend immediately. The TTL is short (treat it as ~minutes, not hours) and isn't formally documented as a contract — design your code to exchange immediately rather than store and retry later.
 
 ## Step 5: Exchange public_token for account_token (backend)
 
@@ -452,7 +452,7 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 ---
 
 **SYMPTOM:** `400 Bad Request` on `/account-token/{public_token}`.
-**CAUSE:** Public token already used (one-time) or expired (~10 min TTL).
+**CAUSE:** Public token already used (one-time) or expired (TTL is short and not documented; treat as minutes — exchange immediately on receipt, don't store).
 **FIX:** Re-trigger Merge Link for a new public_token. Exchange immediately.
 
 ---
@@ -464,7 +464,7 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 ---
 
 **SYMPTOM:** `link_token` rejected as expired.
-**CAUSE:** link_tokens expire after 30 minutes.
+**CAUSE:** link_tokens expire after 30 minutes by default. Max with `link_expiry_mins` is 720 minutes (12 hours), or 10,080 minutes (7 days) for Magic Link.
 **FIX:** Generate fresh on every Merge Link open.
 
 ---
