@@ -17,7 +17,36 @@ After a user connects, Merge runs an initial sync that can take minutes to hours
 
 ## Implementation
 
-Build three sync status UI states on the settings page. Your backend should poll `GET https://api.merge.dev/api/{category}/v1/sync-status` from Merge and expose an internal endpoint (e.g. `GET /api/integrations/:id/sync-status`) that returns `initial_sync_complete` plus per-model status.
+Build three sync status UI states on the settings page. Your backend should poll `GET https://api.merge.dev/api/{category}/v1/sync-status` from Merge and expose an internal endpoint.
+
+### Merge sync-status response shape
+
+`GET /api/{category}/v1/sync-status` returns:
+
+| Field | Type | Notes |
+|---|---|---|
+| `results` | array | One entry per Common Model |
+| `results[].model_name` | string | e.g. `"Employee"`, `"Contact"` |
+| `results[].model_id` | string | e.g. `"hris.Employee"` |
+| `results[].status` | string | `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED` |
+| `results[].is_initial_sync` | boolean | `true` if this is the first-ever sync for this model |
+| `results[].last_sync_start` | datetime | When the most recent sync started |
+
+### Your internal endpoint shape
+
+Expose `GET /api/integrations/:id/sync-status` returning:
+
+```json
+{
+  "initial_sync_complete": false,
+  "models": [
+    { "model_name": "Contact", "status": "syncing", "record_count": null },
+    { "model_name": "Account", "status": "done", "record_count": 42 }
+  ]
+}
+```
+
+Translate Merge status codes to user-friendly strings (never expose `SYNCING`, `PARTIALLY_SYNCED`, etc. to end users).
 
 ### Pattern 1: Initial sync in-progress
 

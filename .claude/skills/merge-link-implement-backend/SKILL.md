@@ -28,7 +28,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 1. Read `category` and optional `integration` from request body
 2. Generate `end_user_origin_id` — use a deterministic format like `{org_id}_{category}` (one per category) or `{org_id}_{category}_{integration_slug}` (multiple per category)
 3. **Create the `linked_accounts` record NOW** with `status = "pending"` — do this BEFORE calling the Merge API (prevents duplicate accounts if the modal is opened multiple times)
-4. If a pending record already exists for this `end_user_origin_id`, reset it instead of creating a duplicate
+4. If a pending record already exists for this `end_user_origin_id`, reuse it instead of creating a duplicate. **Dedup pattern:** use `INSERT ... ON CONFLICT (end_user_origin_id) WHERE status = 'pending' DO NOTHING`, or delete the prior pending row before inserting. Without this, a user who opens Link, abandons, and opens again creates two pending rows — and the exchange handler may match the wrong one
 5. Call `POST https://api.merge.dev/api/{category}/v1/link-token` with `Authorization: Bearer {MERGE_API_KEY}`, passing `end_user_origin_id`, `end_user_email_address`, `end_user_organization_name`, `categories`, and optional `integration`
 6. Return `{ link_token }` to the frontend
 
@@ -99,6 +99,22 @@ integration_name = account_token_response.integration.name  # provider name stri
 ```
 
 **Relinking reuses the existing record.** Pass the stored `end_user_origin_id` to Merge — do not generate a new one or insert a new row.
+
+**Relink UX:** Show a "Reconnect" button on the frontend when `status = "relink_needed"`. On click, call your `/api/merge/relink-integration` endpoint to get a fresh `link_token`, then re-open Merge Link with it. The user re-authenticates and the existing Linked Account is updated — no new record created. Example:
+
+```javascript
+// Frontend: show reconnect when status is relink_needed
+if (account.status === "relink_needed") {
+  showButton("Reconnect " + account.integrationName, async () => {
+    const { link_token } = await fetch("/api/merge/relink-integration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ linked_account_id: account.id }),
+    }).then(r => r.json());
+    openMergeLink(link_token);  // Same openMergeLink from Step 4
+  });
+}
+```
 
 **Delete uses POST, not HTTP DELETE.** Merge's delete-account endpoint is `POST /delete-account`, not `DELETE /linked-accounts/{id}`.
 

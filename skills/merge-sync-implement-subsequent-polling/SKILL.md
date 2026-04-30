@@ -24,14 +24,32 @@ Wait for confirmation before continuing.
 
 ## New Database Table: sync_state
 
-```text
-sync_state
-- linked_account_id   FK to linked_accounts
-- model_id            e.g. "hris.Employee"
-- last_synced_at      YOUR timestamp — when you STARTED the last fetch
-- merge_last_sync_finished  Merge's timestamp from /sync-status response
-- last_fetched_at     when your fetch completed
-- status              DONE | PARTIALLY_SYNCED | SYNCING | FAILED
+**SQL migration:**
+```sql
+CREATE TABLE IF NOT EXISTS sync_state (
+  id                        SERIAL PRIMARY KEY,
+  linked_account_id         INTEGER NOT NULL REFERENCES linked_accounts(id) ON DELETE CASCADE,
+  model_id                  TEXT NOT NULL,              -- e.g. "hris.Employee"
+  last_synced_at            TIMESTAMPTZ,                -- YOUR timestamp — when you STARTED the last fetch
+  merge_last_sync_finished  TIMESTAMPTZ,                -- Merge's timestamp from /sync-status response
+  last_fetched_at           TIMESTAMPTZ,                -- when your fetch completed
+  status                    TEXT,                        -- DONE | PARTIALLY_SYNCED | SYNCING | FAILED
+  UNIQUE (linked_account_id, model_id)
+);
+```
+
+**SQLAlchemy equivalent:**
+```python
+class SyncState(db.Model):
+    __tablename__ = "sync_state"
+    id = db.Column(db.Integer, primary_key=True)
+    linked_account_id = db.Column(db.Integer, db.ForeignKey("linked_accounts.id"), nullable=False)
+    model_id = db.Column(db.String(100), nullable=False)
+    last_synced_at = db.Column(db.DateTime, nullable=True)
+    merge_last_sync_finished = db.Column(db.DateTime, nullable=True)
+    last_fetched_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), nullable=True)
+    __table_args__ = (db.UniqueConstraint("linked_account_id", "model_id"),)
 ```
 
 ## The Two Timestamps (Critical Distinction)
