@@ -14,7 +14,7 @@ Common events:
 - `linked_account.synced` — initial or incremental sync completed
 - `*.created`, `*.updated`, `*.deleted` — changes to specific Common Models (e.g., `employee.created`, `ticket.updated`)
 
-Configure: **https://app.merge.dev/configuration/webhooks → Add webhook**
+Configure: **https://app.merge.dev/configuration/webhooks/emitters → Add webhook**
 
 ⚠️ **The "Send test" button** sends a connectivity ping (`{"response": "Success! This URL will be notified."}`), NOT a real event payload. Your handler will see `event_type=undefined`. To test real event handling, reconnect via Merge Link with the Test integration — that triggers actual `Linked Account synced` events.
 
@@ -22,7 +22,7 @@ Configure: **https://app.merge.dev/configuration/webhooks → Add webhook**
 
 For providers that support webhooks natively (Salesforce, Jira, Slack, etc.), Merge subscribes on your behalf and forwards normalized events to your URL. Faster than polling.
 
-Configure: **https://app.merge.dev/configuration/webhooks → Third Party tab → toggle on per integration**
+Configure: **https://app.merge.dev/configuration/webhooks/receivers → toggle on per integration**
 
 ## Webhook payload structure
 
@@ -76,7 +76,7 @@ Always verify the signature. Without verification, anyone who knows your URL can
 
 **Why strip `=` padding:** base64url signatures may arrive with or without trailing `=` padding depending on the sender. Strip padding from both the computed and received signatures before comparing to avoid mismatches.
 
-**Webhook secret:** Found at `https://app.merge.dev/configuration/webhooks → click your webhook → Security`. Different per webhook config.
+**Webhook secret:** Found at `https://app.merge.dev/configuration/webhooks/emitters → click your webhook → Security`. Different per webhook config.
 
 **Secret rotation:** When you rotate the webhook secret in the dashboard, in-flight webhooks signed with the old secret may still arrive for a short period. During rotation, verify against both the old and new secret — accept the webhook if either matches. Remove the old secret after a few minutes.
 

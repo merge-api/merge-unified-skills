@@ -171,6 +171,8 @@ app.post("/api/merge/link-token", async (req, res) => {
 });
 ```
 
+> **Multi-category integrations.** If the same end-user needs to connect to more than one category (e.g., CRM + ATS), generate a separate `link_token` per category. Each category becomes its own Linked Account with its own `account_token` — track them as separate rows keyed by `(end_user_origin_id, category)`. Don't pass multiple categories in a single `link_token` unless you've confirmed the UX with Merge.
+
 ## Step 4: Open Merge Link (frontend)
 
 ### First run: use the Test integration
@@ -187,8 +189,16 @@ To test API calls without going through Merge Link at all, create a **Test Linke
 import { useMergeLink } from "@mergeapi/react-merge-link";
 
 function ConnectButton({ linkToken }: { linkToken: string | null }) {
+  // Gate hook initialization on a non-null token. `useMergeLink` accepts an
+  // empty string but errors silently — render a loading state until the
+  // token actually arrives, then mount the inner component.
+  if (!linkToken) return <button disabled>Loading…</button>;
+  return <ConnectButtonInner linkToken={linkToken} />;
+}
+
+function ConnectButtonInner({ linkToken }: { linkToken: string }) {
   const { open, isReady } = useMergeLink({
-    linkToken: linkToken ?? "",
+    linkToken,
     onSuccess: async (publicToken) => {
       await fetch("/api/merge/exchange", {
         method: "POST",
@@ -199,7 +209,7 @@ function ConnectButton({ linkToken }: { linkToken: string | null }) {
     onExit: () => console.log("User closed Merge Link"),
   });
   // isReady = true when SDK loaded + initialized. Gate the button on it.
-  return <button onClick={open} disabled={!isReady || !linkToken}>Connect your CRM</button>;
+  return <button onClick={open} disabled={!isReady}>Connect your CRM</button>;
 }
 ```
 
@@ -346,7 +356,9 @@ Full schemas: `references/common-models.md`.
 
 **Default sync cadence:** 24 hours in production (configurable per Linked Account).
 
-Configure at: **https://app.merge.dev/configuration/webhooks**
+Configure in dashboard:
+- **Merge → Your app** (sync-completed events, Linked Account changes): https://app.merge.dev/configuration/webhooks/emitters
+- **Third-party → Merge** (real-time updates from source providers): https://app.merge.dev/configuration/webhooks/receivers
 
 ⚠️ **The "Send test" button sends a connectivity ping, NOT a real event.** You'll see `{"response": "Success! This URL will be notified."}` — your handler will get `event_type=undefined`. This is normal. To test real events, reconnect via Merge Link with the Test integration.
 
@@ -403,6 +415,7 @@ More webhook event types and payload schemas: `references/webhooks.md`.
 
 ### Configuration
 - [ ] Common Model scopes enabled at https://app.merge.dev/common-models/{category}
+- [ ] **Selective Sync** configured for end-users with large datasets — filters at the source so Merge fetches only what you need (configure per Linked Account in the dashboard)
 - [ ] Tested with a production Linked Account (not just sandbox)
 
 Switch from `test_xxx` to `production_xxx` key and ship.
