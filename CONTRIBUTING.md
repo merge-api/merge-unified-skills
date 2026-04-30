@@ -45,6 +45,9 @@ LICENSE                 MIT
 - **Always show both SDK and HTTP examples** unless the developer specifies a language.
 - **Default to the test environment** in every example. Tell developers to swap to production explicitly before shipping.
 - **Embed real schemas / endpoints / verification code.** Don't hand-wave with "see the docs". Skills exist to save the developer from reading docs.
+- **Inline response schemas at every step that calls an API.** Show the fields, types, and gotchas (e.g., "this field is an SDK model object, not a string"). Don't delegate load-bearing information to reference docs — an AI agent follows the main skill body step-by-step and won't proactively read references unless told to.
+- **Show complete handler patterns, not fragments.** Replace `# Save to your DB: customer.token = token` with a real handler that shows the DB lookup, update, and response. AI agents generate code from these examples literally.
+- **Document SDK object types explicitly.** When the Merge SDK returns model objects (pydantic in Python, typed objects in Node), note that they're not plain dicts and show how to serialize them (`.model_dump()`, `.name`, spread operator).
 - **Include a Troubleshooting section** with SYMPTOM / CAUSE / FIX entries for the top 5–8 things that go wrong.
 
 ## PR workflow
