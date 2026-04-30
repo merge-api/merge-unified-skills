@@ -67,12 +67,14 @@ Other ATS Common Models: `Application`, `Job`, `Department`, `Office`, `RejectRe
 |-------|------|-------|
 | `first_name` | string | |
 | `last_name` | string | |
-| `account` | string (UUID) | FK to Account (company they work for) |
+| `account` | reference object or UUID | `{id, name, ...}` when expanded, UUID string otherwise. Extract: `typeof c.account === "object" ? c.account?.name : null` |
 | `owner` | string (UUID) | FK to User (sales rep who owns) |
-| `addresses` | array | Postal addresses |
-| `email_addresses` | array | `{value, email_address_type}` |
-| `phone_numbers` | array | `{value, phone_number_type}` |
+| `addresses` | `Array<{street1, street2, city, state, postalCode, country, addressType}>` | Postal addresses — array of objects, NOT a string |
+| `email_addresses` | `Array<{emailAddress, emailAddressType}>` | Extract primary: `c.emailAddresses?.[0]?.emailAddress` — NOT a string |
+| `phone_numbers` | `Array<{phoneNumber, phoneNumberType}>` | Extract primary: `c.phoneNumbers?.[0]?.phoneNumber` — NOT a string |
 | `last_activity_at` | datetime | |
+
+> **Field shapes matter.** `email_addresses`, `phone_numbers`, and `addresses` are arrays of objects, not strings. `account` is either a reference object (with `.name`, `.id`) or a UUID depending on whether the `expand` parameter was used. See the extraction patterns above.
 
 Other CRM Common Models: `Account`, `Lead`, `Opportunity`, `Stage`, `Task`, `Note`, `Engagement`, `User`, `CustomObject`, `Association`.
 
@@ -231,6 +233,10 @@ print(employee.remote_data)  # raw provider payload
 
 ## Field Mappings
 
-For provider-specific fields you want surfaced as first-class fields on the Common Model, use Field Mappings. Map a remote field to a custom field on the Common Model, then it appears in every API response.
+When a customer asks "where's my Salesforce custom field X?", the answer is Field Mappings. Map a provider-specific remote field to a named field on the Common Model, then it appears in every API response alongside the standard fields.
+
+This is how you get custom fields beyond what the Common Model provides — critical for production integrations where customers have provider-specific data.
 
 Configure at: `https://app.merge.dev/configuration/field-mappings`
+
+See `/merge-unified:merge-post-connection-enable-custom-fields` for the full implementation guide.
