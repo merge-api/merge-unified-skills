@@ -34,13 +34,35 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 ### Endpoint 2: POST /api/merge/exchange-public-token
 
-1. Receive `public_token` from frontend
+1. Receive `public_token` and `end_user_origin_id` from frontend (the frontend must send the origin ID alongside the public token — the exchange response does NOT contain it)
 2. Call `POST https://api.merge.dev/api/{category}/v1/account-token/{public_token}` with `Authorization: Bearer {MERGE_API_KEY}` to get `account_token`
 3. Call `GET https://api.merge.dev/api/{category}/v1/account-details` with both `Authorization: Bearer {MERGE_API_KEY}` and `X-Account-Token: {account_token}` headers
-4. Extract `end_user_origin_id`, `integration`, and `integration_slug` directly from the **top level** of the account details response (not nested — see gotchas)
+4. Extract `end_user_origin_id`, `integration`, and `integration_slug` from the account details response (top level, not nested — see gotchas)
 5. Look up the `linked_accounts` record by `end_user_origin_id`
 6. Update: `account_token`, `integration_slug`, `status = "active"`
 7. Return success
+
+**Account-token response** (from step 2):
+
+| Field | Type | Notes |
+|---|---|---|
+| `account_token` | string | The long-lived credential |
+| `integration` | SDK model object | Has `.name` (string). **Not a dict** — use `.name` for the string |
+| `id` | string (UUID) | Merge's ID for this Linked Account |
+
+⚠️ This response does NOT include `end_user_origin_id`. Pass it from the frontend or use the `end_user_origin_id` from the account-details call below.
+
+**Account-details response** (from step 3):
+
+| Field | Type | Notes |
+|---|---|---|
+| `end_user_origin_id` | string | The ID you sent in step 1 — use to look up the pending record |
+| `integration` | string | Provider name (this IS a plain string, unlike the account-token response) |
+| `integration_slug` | string | Provider slug |
+| `status` | string | Connection status |
+| `id` | string (UUID) | Merge's Linked Account ID |
+
+> **SDK type warning:** When using the Merge SDK, `account_token_response.integration` is an SDK model object (use `.name`), but `account_details.integration` is a plain string. They are different types despite the same field name.
 
 ### Endpoint 3: POST /api/merge/relink-integration
 
@@ -61,15 +83,19 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 **`end_user_origin_id` must be stored before calling Merge API.** If the DB write happens after the Merge API call, repeated modal opens can create duplicate Merge accounts with no local record to match against.
 
-**Account details response is flat.** Integration info is at the top level of the response object:
+**Account details response is flat.** `integration` and `integration_slug` are top-level fields (not nested). When using the SDK:
 
 ```text
-# CORRECT
-integration_name = account_details.get("integration")       # "BambooHR"
-integration_slug = account_details.get("integration_slug")  # "bamboohr"
+# Account-details: integration IS a plain string
+integration_name = account_details.integration        # provider name string
+integration_slug = account_details.integration_slug   # provider slug string
 
-# WRONG — "integration" is a string, not an object
+# WRONG — on account-details, "integration" is a string, not an object
 integration_name = account_details["integration"]["name"]   # TypeError
+
+# Account-token: integration is an SDK MODEL OBJECT (different!)
+integration_name = account_token_response.integration.name  # provider name string
+# account_token_response.integration is NOT a string — don't pass it directly to JSON
 ```
 
 **Relinking reuses the existing record.** Pass the stored `end_user_origin_id` to Merge — do not generate a new one or insert a new row.

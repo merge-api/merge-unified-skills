@@ -249,8 +249,10 @@ integration_name = account_details['integration']['name']  # ERROR: str has no a
 
 # ✅ CORRECT - Extract from top level
 integration_name = account_details.get('integration')       # "Officient"
-integration_slug = account_details.get('integration_slug')  # "officient"
+integration_slug = account_details.get('integration_slug')  # provider slug string
 ```
+
+> **SDK type warning:** When using the Merge SDK (not raw HTTP), `account_token_response.integration` is an SDK model object (use `.name` for the string), but `account_details.integration` is a plain string. They are different types despite the same field name. Don't pass SDK model objects directly to `jsonify()` or `JSON.stringify()` — use `.model_dump()` (Python) or spread `{ ...obj }` (Node) to serialize.
 
 ### 3. Integration Relinking
 
