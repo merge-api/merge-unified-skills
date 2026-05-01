@@ -13,7 +13,7 @@ Different customers have different custom fields in their HR/ATS/CRM systems —
 
 ## Prerequisites
 
-`merge-post-connection-set-context` complete (custom fields fundamentals loaded).
+Context loaded via Step 1 of `implementing-merge-post-connection` (custom fields fundamentals loaded).
 
 ## Choose Your Approach
 

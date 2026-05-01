@@ -13,7 +13,7 @@ Creates the database table that tracks linked Merge accounts — one row per act
 
 ## Prerequisites
 
-Context loaded via `merge-link-set-context` (tech stack and ORM identified).
+Context loaded via Step 1 of `implementing-merge-link` (tech stack and ORM identified).
 
 ## Before Proceeding
 

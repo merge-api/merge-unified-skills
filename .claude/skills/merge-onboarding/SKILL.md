@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # Merge Integration Assistant
@@ -28,7 +28,7 @@ Do NOT activate for: generic OAuth questions unrelated to Merge, or questions ab
 
 When this skill activates for the first time in a conversation, say:
 
-> I'm the Merge Integration Assistant (v0.2.0). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
+> I'm the Merge Integration Assistant (v0.4.0). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
 
 ## Overview
 
@@ -213,7 +213,9 @@ function ConnectButtonInner({ linkToken }: { linkToken: string }) {
     onExit: () => console.log("User closed Merge Link"),
   });
   // isReady = true when SDK loaded + initialized. Gate the button on it.
-  return <button onClick={open} disabled={!isReady}>Connect your CRM</button>;
+  // Replace the label with your category — "Connect your CRM" / "Connect your HRIS" /
+  // "Connect your ticketing system" / etc. — or use the integration name if known.
+  return <button onClick={open} disabled={!isReady}>Connect your provider</button>;
 }
 ```
 
