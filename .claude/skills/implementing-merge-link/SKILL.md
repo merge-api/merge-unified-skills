@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Implementing Merge Link
@@ -84,7 +84,7 @@ Choose one OR the other based on your product's UX.
 **FIX:** Set `Authorization: Bearer {your-test-api-key}` and confirm the key is from https://app.merge.dev → Settings → API Keys → Test environment
 
 **SYMPTOM:** `exchange_public_token` returns 400 "token expired"  
-**CAUSE:** The public token from Merge Link is single-use and expires in 30 minutes  
+**CAUSE:** The public token from Merge Link is single-use and has a short TTL (~10 min). Either it was already exchanged once, or `/exchange` was deferred (e.g., to a background job) and the window passed.  
 **FIX:** Call exchange immediately after `onSuccess` fires; never store or reuse a public token
 
 **SYMPTOM:** `linked_accounts` table has duplicate rows for the same user  
@@ -92,8 +92,8 @@ Choose one OR the other based on your product's UX.
 **FIX:** Add `UNIQUE(organization_id, end_user_origin_id)` and use INSERT ... ON CONFLICT DO UPDATE
 
 **SYMPTOM:** Merge Link modal does not open  
-**CAUSE:** `@mergeapi/merge-link` script not loaded or `MergeLink.initialize` called before DOM ready  
-**FIX:** Load the script in `<head>` and call initialize inside a `DOMContentLoaded` listener or React `useEffect`
+**CAUSE:** Merge Link wasn't loaded before invocation. For React, `@mergeapi/react-merge-link` (npm) wasn't installed or imported. For vanilla JS, the CDN script `https://cdn.merge.dev/initialize.js` wasn't loaded yet, or `MergeLink.initialize` was called before DOM ready.  
+**FIX:** React: `npm install @mergeapi/react-merge-link` and use the `useMergeLink` hook (see `/merge-unified:merge-onboarding` Step 4 for the full setup). Vanilla JS: include `<script src="https://cdn.merge.dev/initialize.js"></script>` in `<head>` and call `MergeLink.initialize` inside a `DOMContentLoaded` listener.
 
 **SYMPTOM:** `account_token` is null after successful Link flow  
 **CAUSE:** The exchange endpoint was never called — only `link_token` was created  

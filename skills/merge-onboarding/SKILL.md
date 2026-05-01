@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.0
+  version: 0.5.0
 ---
 
 # Merge Integration Assistant
@@ -242,7 +242,7 @@ function ConnectButtonInner({ linkToken }: { linkToken: string }) {
 
 ⚠️ **`initialize()` is async.** Always call `openLink()` inside the `onReady` callback. Calling before `onReady` results in an invisible iframe. Callbacks: `onReady`, `onSuccess(publicToken)`, `onExit`, `onValidationError(error)`.
 
-`onSuccess` fires with a **public_token** — a one-time token. Send it and the `end_user_origin_id` to your backend immediately. The TTL is short (treat it as ~minutes, not hours) and isn't formally documented as a contract — design your code to exchange immediately rather than store and retry later.
+`onSuccess` fires with a **public_token** — a one-time token with a short TTL (~10 min). Send it and the `end_user_origin_id` to your backend immediately and call `/exchange` synchronously inside `onSuccess`. Don't store the public_token to retry later — design for "exchange right now."
 
 ⚠️ **`onSuccess` is not the source of truth.** Merge creates the Linked Account on its side as soon as OAuth succeeds — *regardless* of whether your `/api/merge/exchange` ever runs. If the user closes the modal before exchange completes (network blip, accidental close, Finish-button skipped), you end up with an account on Merge that your DB doesn't know about. Reopening Merge Link with the same `end_user_origin_id` then shows "You're connected!" with no integration picker, looking like a frontend bug. **Production-grade fix:** subscribe to the `linked_account.created` webhook and create your local row from the webhook handler, not just from `onSuccess`. The `onSuccess` exchange becomes the fast path; the webhook is the backstop that closes the race. See Step 7.
 
@@ -250,12 +250,16 @@ function ConnectButtonInner({ linkToken }: { linkToken: string }) {
 
 ### Linked Account states
 
-| Status | Meaning |
-|--------|---------|
-| `pending` | link_token issued, exchange not yet completed |
-| `active` | exchange completed, account_token stored |
-| `relink_needed` | end-user revoked access or credentials expired |
-| `incomplete` | issue on Merge's side — check Linked Account logs |
+The Merge API returns the Linked Account `status` as **uppercase** strings on `GET /account-details` and on every webhook payload. Match against these values exactly:
+
+| Merge API status | Meaning | Action |
+|--------|---------|--------|
+| `COMPLETE` | Healthy, syncing | None |
+| `INCOMPLETE` | Linking flow not finished | Prompt user to complete Merge Link |
+| `RELINK_NEEDED` | Credentials expired or revoked at source | Trigger re-link flow |
+| `IDLE` | Active but no recent sync | Investigate, may be normal |
+
+> **Local DB convention.** The `linked_accounts.status` column in the example schemas in this skill uses **lowercase** values (`pending`, `active`, `relink_needed`, `incomplete`) — these track *your* application state (have we exchanged the token yet?), not Merge's. Don't compare these to webhook payloads or API responses; compare those to the uppercase values in the table above.
 
 ### AccountToken response schema
 
@@ -329,6 +333,10 @@ process.on("uncaughtException",  (e) => console.error("[uncaughtException]", e))
 
 Two headers on every call — both reads AND writes: `Authorization: Bearer YOUR_API_KEY` + `X-Account-Token: ACCOUNT_TOKEN`. SDKs handle this when you pass `account_token` at init. Forgetting `X-Account-Token` on a write returns `401` with no clear hint that the missing header is the cause.
 
+> **Where does `account_token` come from?** Either (a) the value persisted by Step 5 for a real Linked Account, or (b) for a quick smoke test, copy a Test Linked Account's token directly from https://app.merge.dev/linked-accounts/test → click your test account → copy `account_token`.
+
+> **All examples below use `merge.crm.*` as a placeholder.** Replace `.crm` with your category slug (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, `mktg`) and swap `contacts` for the matching Common Model (`employees`, `candidates`, `tickets`, etc.). Querying with the wrong category against an account_token that's scoped to a different category returns an empty array, not an error — silent footgun.
+
 ### Always paginate
 
 Merge returns paginated results. **Without cursor handling you only get page 1.** Real accounts have thousands of records.
@@ -338,7 +346,7 @@ Merge returns paginated results. **Without cursor handling you only get page 1.*
 merge = Merge(api_key="YOUR_TEST_KEY", account_token=account_token)
 all_results, cursor = [], None
 while True:
-    page = merge.crm.contacts.list(cursor=cursor, page_size=100)
+    page = merge.crm.contacts.list(cursor=cursor, page_size=100)   # replace .crm + .contacts
     all_results.extend(page.results)
     if page.next is None: break
     cursor = page.next
@@ -351,7 +359,7 @@ const merge = new MergeClient({ apiKey: "YOUR_TEST_KEY", accountToken });
 const all = [];
 let cursor: string | undefined;
 do {
-  const page = await merge.crm.contacts.list({ cursor, pageSize: 100 });
+  const page = await merge.crm.contacts.list({ cursor, pageSize: 100 });  // replace .crm + .contacts
   all.push(...(page.results ?? []));
   cursor = page.next ?? undefined;
 } while (cursor);
@@ -438,7 +446,7 @@ app.post("/webhook", raw({ type: "application/json" }), (req, res) => {
     return res.status(401).send("invalid signature");
   }
   const event = JSON.parse(rawBody.toString("utf8"));
-  res.sendStatus(200);  // ACK fast — Merge retries on >30s response
+  res.sendStatus(200);  // ACK fast — Merge times out after 10s; aim to respond in <5s
   setImmediate(() => processEvent(event));  // Process async; use a real queue in production
 });
 ```
@@ -453,7 +461,7 @@ More webhook event types and payload schemas: `references/webhooks.md`.
 
 ### Backend
 - [ ] Webhook listeners with HMAC-SHA256 base64url signature verification
-- [ ] Async webhook processing (queue — Merge retries on >30s response)
+- [ ] Async webhook processing (queue — Merge times out after 10s and counts the delivery as failed; aim to ACK in under 5s)
 - [ ] Pagination on all list endpoints (cursor loop)
 - [ ] API error handling per status: 401 → relink, 403 → enable scope at https://app.merge.dev/configuration/common-model-scopes, 429 → exponential backoff, 5xx → retry then alert
 - [ ] Encrypt `account_token` at rest (KMS / pgcrypto)
