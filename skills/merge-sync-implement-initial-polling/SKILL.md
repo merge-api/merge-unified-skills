@@ -4,12 +4,14 @@ description: Implement initial sync detection via polling — a scheduled job th
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Initial Sync Detection via Polling
 
 Creates a background polling job that periodically checks all active linked accounts' sync status and triggers an initial data fetch when Merge signals the sync is complete. Simpler than webhooks and recommended as the first implementation.
+
+> **Field-name convention used in this doc.** Pseudo-code and JSON snippets below show the raw HTTP response shape (snake_case: `is_initial_sync`, `model_name`, `last_sync_result`, `modified_at`). The Merge SDKs auto-convert to camelCase — in Node, `model.is_initial_sync` becomes `model.isInitialSync`. Write your code in your SDK's convention.
 
 ## Prerequisites
 

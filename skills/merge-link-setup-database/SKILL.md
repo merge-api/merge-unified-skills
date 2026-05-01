@@ -4,7 +4,7 @@ description: Create the linked_accounts database table required for Merge Link. 
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Setup Database: linked_accounts Table
@@ -34,7 +34,7 @@ Tell your coding agent:
 > | `end_user_origin_id` | string, at least 100 chars, not null | unique identifier for this integration |
 > | `category` | string, at least 50 chars, not null | Merge category: `hris`, `ats`, `crm`, etc. |
 > | `integration_slug` | string, at least 100 chars, nullable | e.g. `gusto`, `workday` — set after token exchange |
-> | `account_token` | string, at least 500 chars, nullable | permanent Merge API token — null until exchange completes |
+> | `account_token` | TEXT (or string with no fixed cap), nullable | permanent Merge API token — null until exchange completes. Use `TEXT` rather than a fixed `VARCHAR(64/128)`; account tokens can exceed 100 chars and a too-tight column truncates silently in some drivers |
 > | `status` | string, at least 20 chars, default `pending` | `pending`, `active`, `error`, `disabled` |
 > | `initial_sync_complete` | boolean, default false | flipped true after first full sync |
 > | `created_at` | timestamp | default now |

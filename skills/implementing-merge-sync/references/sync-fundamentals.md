@@ -2,6 +2,8 @@
 
 This document is a focused reference for developers implementing Merge API sync triggers — covering the sync lifecycle, status detection, incremental fetching, timestamp tracking, and webhook events.
 
+> **Field-name convention used in this doc.** Pseudo-code, JSON examples, and condition checks below show the **raw HTTP/JSON response shape** (snake_case: `is_initial_sync`, `model_name`, `last_sync_result`, `modified_at`, `remote_data`). The Merge SDKs (Node, Python typed client, Java, Go) auto-convert these to language-idiomatic names — in Node/TypeScript, `is_initial_sync` becomes `isInitialSync`, `last_sync_result` becomes `lastSyncResult`, `modified_at` becomes `modifiedAt`, etc. **Write your code in the convention your SDK uses.** If you're calling the REST API directly, use snake_case as shown.
+
 ---
 
 ## Initial Sync Lifecycle

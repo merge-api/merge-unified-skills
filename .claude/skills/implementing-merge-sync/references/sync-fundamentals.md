@@ -2,6 +2,8 @@
 
 This document is a focused reference for developers implementing Merge API sync triggers — covering the sync lifecycle, status detection, incremental fetching, timestamp tracking, and webhook events.
 
+> **Field-name convention used in this doc.** Pseudo-code, JSON examples, and condition checks below show the **raw HTTP/JSON response shape** (snake_case: `is_initial_sync`, `model_name`, `last_sync_result`, `modified_at`, `remote_data`). The Merge SDKs (Node, Python typed client, Java, Go) auto-convert these to language-idiomatic names — in Node/TypeScript, `is_initial_sync` becomes `isInitialSync`, `last_sync_result` becomes `lastSyncResult`, `modified_at` becomes `modifiedAt`, etc. **Write your code in the convention your SDK uses.** If you're calling the REST API directly, use snake_case as shown.
+
 ---
 
 ## Initial Sync Lifecycle
@@ -96,7 +98,7 @@ Merge provides the `GET /api/{category}/v1/sync-status` endpoint to monitor sync
 
 **Critical Timing**: The `is_initial_sync` flag flips to `false` immediately upon first completion, not after a second sync.
 
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -120,7 +122,7 @@ After initial sync completes, subsequent syncs can accept partial data since you
 **Subsequent Sync is Ready When:**
 - `status == "DONE"` **OR** `status == "PARTIALLY_SYNCED"` **OR** `is_initial_sync == false`
 
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -168,7 +170,7 @@ You must track **two separate timestamps** per model. Confusing them causes data
 
 **Why store start time, not end time**: Using the start timestamp ensures complete coverage with potential overlap (which is safer than gaps). Records modified during your fetch window are captured in both syncs rather than potentially missed.
 
-```
+```text
 Sync 1: Start 10:00, End 10:05, Store last_synced_at: 10:00
 Sync 2: modified_after=10:00, Start 10:15, End 10:18, Store last_synced_at: 10:15
 ```
@@ -180,7 +182,7 @@ Sync 2: modified_after=10:00, Start 10:15, End 10:18, Store last_synced_at: 10:1
 After the initial sync, use `modified_after` and `modified_before` together to fetch only records that changed within a specific time window.
 
 **Pattern**:
-```
+```text
 GET /api/{category}/v1/{model}?modified_after=2024-01-15T10:30:00Z&modified_before=2024-01-15T22:46:41Z
 ```
 
@@ -188,7 +190,7 @@ GET /api/{category}/v1/{model}?modified_after=2024-01-15T10:30:00Z&modified_befo
 - `modified_before` = Merge's `last_sync_finished` — creates a bounded upper boundary
 
 **Example Flow**:
-```
+```text
 # Initial state: No previous fetch
 Poll /sync-status → last_sync_finished = 2024-01-15T10:30:00Z
 Detect: New data available (first fetch)
@@ -305,7 +307,7 @@ Best for **granular, model-specific** sync notifications during subsequent syncs
 
 ### Webhook Processing Pattern
 
-```
+```text
 1. Receive webhook with sync_status data
 2. Extract last_sync_finished timestamp
 3. Compare with your stored last_sync_finished

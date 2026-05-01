@@ -4,12 +4,14 @@ description: Implement incremental data fetching via polling — after initial s
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Subsequent Sync Detection via Polling
 
 Extends the initial sync polling job to detect when new data is available and fetch only changed records. Eliminates full re-fetches by tracking timestamps per model.
+
+> **Field-name convention used in this doc.** Pseudo-code and JSON snippets below show the raw HTTP response shape (snake_case: `last_sync_result`, `modified_at`, `is_initial_sync`). The Merge SDKs auto-convert to camelCase — in Node, `modified_after` becomes `modifiedAfter` (as a request param), and response fields like `last_sync_result` become `lastSyncResult`. Write your code in your SDK's convention.
 
 ## Prerequisites
 

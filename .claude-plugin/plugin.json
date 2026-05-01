@@ -1,6 +1,6 @@
 {
   "name": "merge-unified",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Claude Code skills for integrating with and building on the Merge Unified API",
   "author": {
     "name": "Merge",
