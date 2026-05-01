@@ -71,7 +71,7 @@ Or just describe what you want — Claude will pick the right skill:
 
 ## How It Works
 
-All skills use Merge's official **Advanced SDKs**. Six languages are supported:
+All skills use Merge's official **SDKs**. Six languages are supported:
 
 | Language | Package | Repo |
 |---|---|---|
