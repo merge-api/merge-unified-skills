@@ -4,6 +4,14 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-05-01
+
+Pre-customer hygiene fix.
+
+### Fixed
+
+- `implementing-merge-post-connection/references/post-connection-fundamentals.md` line 90: replaced an internal request-catcher endpoint (`david-merge.requestcatcher.com`) embedded in a sample webhook payload with the `yourapp.com/webhooks/merge` placeholder used elsewhere in the same file (line 159) and in sibling reference files (`implementing-merge-link/references/platform-overview.md`, `implementing-merge-sync/references/sync-fundamentals.md`). The leaked URL would have read to customers as-if it were the canonical webhook target. Surfaced during the final pre-ship sweep.
+
 ## [0.7.1] — 2026-05-01
 
 Focus pass plus mirror-discipline guardrail. Drops the standalone Apideck migration tool to keep this repo focused on the Merge Unified API teaching surface, and adds CI enforcement that the `skills/` and `.claude/skills/` mirrors stay byte-identical.

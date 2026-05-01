@@ -87,7 +87,7 @@ Sample **Linked account synced** webhook payload for a ticketing category linked
   "hook": {
     "id": "2fa2b314-33c6-48d5-9eb8-683dc5754429",
     "event": "LinkedAccount.sync_completed",
-    "target": "https://david-merge.requestcatcher.com/"
+    "target": "https://yourapp.com/webhooks/merge"
   },
   "linked_account": {
     "id": "7841ee0a-5a1a-44db-bc7e-2912d8c17515",
