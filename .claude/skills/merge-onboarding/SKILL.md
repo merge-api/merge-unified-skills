@@ -606,4 +606,4 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 - Full link_token lifecycle + Magic Link variant: `references/auth-flow.md`
 - Webhook event types + signature verification: `references/webhooks.md`
 
-External: [Merge docs](https://docs.merge.dev/merge-unified/link/overview/) · [API status](https://status.merge.dev) · [Sign up](https://app.merge.dev/signup) · [API keys](https://app.merge.dev/keys)
+External: [Merge docs](https://docs.merge.dev/) · [API status](https://status.merge.dev) · [Sign up](https://app.merge.dev/signup) · [API keys](https://app.merge.dev/keys)
