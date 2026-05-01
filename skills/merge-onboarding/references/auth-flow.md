@@ -76,7 +76,7 @@ Optional fields:
 | Field | Type | Notes |
 |-------|------|-------|
 | `integration` | string | Pre-select a single provider, skip the integration picker. Use the integration's slug (e.g., `"google-drive"`). |
-| `link_expiry_mins` | integer | Default 30. Max 30. |
+| `link_expiry_mins` | integer | Default 30. Range 30–720 minutes (12 h) for standard Merge Link, up to 10080 minutes (7 days) when `should_create_magic_link_url: true`. |
 | `should_create_magic_link_url` | boolean | If true, returns a `magic_link_url` that emails the user a Merge Link page (no embed needed). |
 | `common_models` | array | Pre-restrict which Common Models this Linked Account can access. |
 | `language` | string | UI language for Merge Link, e.g. `"en"`, `"de"`, `"fr"`. |

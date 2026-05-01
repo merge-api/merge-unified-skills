@@ -1,10 +1,10 @@
 ---
 name: merge-post-connection-enable-custom-fields
-description: Build a settings UI that lets customers select and enable custom fields from their connected system using Merge's Field Mapping API. Use as Step 6 of post-connection implementation when customers need access to fields beyond Merge's common models.
+description: Build a settings UI that lets customers select and enable custom fields from their connected system using Merge's Field Mapping API. Use as Step 5 of post-connection implementation when customers need access to fields beyond Merge's common models.
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Enable Custom Fields

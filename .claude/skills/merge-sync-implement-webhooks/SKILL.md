@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Merge Sync via Webhooks (Primary)
@@ -82,7 +82,7 @@ This endpoint is security-critical. Follow these three rules exactly:
 
 1. **Verify HMAC-SHA256 signature FIRST** — before parsing the request body.
 2. **Queue the raw payload** for async processing.
-3. **Return 200 OK immediately** — Merge times out after 30 seconds and retries up to 2 more times on 5xx.
+3. **Return 200 OK immediately** — Merge times out after **10 seconds** (or on 4xx/5xx) and retries 5 times over ~1 hour with exponential backoff. Aim to ACK in under 5 seconds.
 
 > **Order matters:** read the raw body *before* JSON parsing. If your framework auto-parses (e.g., Express with `app.use(express.json())`), use `express.raw({ type: '*/*' })` on the webhook route so you can compute HMAC against the raw Buffer.
 

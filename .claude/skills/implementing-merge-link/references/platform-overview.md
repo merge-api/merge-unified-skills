@@ -414,8 +414,8 @@ Best for granular, model-specific sync notifications during subsequent syncs.
 
 **Webhook Timeout and Retry Behavior**:
 - **Process asynchronously**: Webhook processing must be asynchronous to ensure prompt responses
-- **30-second timeout**: If your endpoint doesn't respond within 30 seconds, Merge considers the delivery failed
-- **Automatic retries**: Merge will retry failed webhooks up to 2 additional times (3 total attempts)
+- **10-second timeout**: If your endpoint doesn't respond within 10 seconds (or returns 4xx/5xx), Merge considers the delivery failed. Aim to ACK in under 5 seconds
+- **Automatic retries**: 5 attempts over ~1 hour with exponential backoff
 - **Best practice**: Return 200 OK immediately upon receipt, then process webhook payload asynchronously in background job
 
 #### Polling (Periodic Checks)

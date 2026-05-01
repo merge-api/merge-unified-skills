@@ -42,7 +42,7 @@ response = merge_admin.filestorage.link_token.create(
     categories=["filestorage"],
     # Optional:
     # integration="google-drive",       # pre-select a single provider
-    # link_expiry_mins=30,              # max 30
+    # link_expiry_mins=30,              # range 30–720; up to 10080 with should_create_magic_link_url=True
 )
 print(response.link_token)
 print(response.magic_link_url)         # email-able URL alternative to embedded Link

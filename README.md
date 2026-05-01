@@ -118,8 +118,8 @@ Convert all 16 skills to 9 AI coding tools with a single script.
 | OpenCode | `.opencode/skills/` | `./scripts/convert.sh --tool opencode --target .` |
 | Codex | `.codex/skills/` | `./scripts/convert.sh --tool codex --target .` |
 | Augment | `.augment/rules/` | `./scripts/convert.sh --tool augment --target .` |
-| Antigravity | `~/.gemini/antigravity/skills/` | `./scripts/convert.sh --tool antigravity --target .` |
-| Hermes Agent | `~/.hermes/skills/` | `./scripts/convert.sh --tool hermes --target .` |
+| Antigravity | `<target>/.gemini/antigravity/skills/` (project) or `~/.gemini/antigravity/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool antigravity --target .` |
+| Hermes Agent | `<target>/.hermes/skills/` (project) or `~/.hermes/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool hermes --target .` |
 
 ### How it works
 

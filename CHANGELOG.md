@@ -4,6 +4,26 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.7.3] — 2026-05-01
+
+Customer-readiness pass. Eleven concrete inconsistencies and ambiguities surfaced from a final pre-ship audit. None are show-stoppers, but every one is the kind of friction that costs a developer 10–30 minutes of confusion or a support ticket.
+
+### Fixed
+
+- `implementing-merge-link` (v0.3.0): troubleshooting entry referenced the nonexistent npm package `@mergeapi/merge-link`. Verified against npm registry — only `@mergeapi/react-merge-link` exists. Entry now distinguishes the React package vs the vanilla CDN script (`https://cdn.merge.dev/initialize.js`).
+- `merge-onboarding` (v0.5.0) — Step 5 Linked Account states: previously documented the lowercase `pending`/`active`/`relink_needed`/`incomplete` values as if they were Merge API states. They aren't — those are the local DB convention used in the example schemas. Merge API returns **uppercase** `COMPLETE`/`INCOMPLETE`/`RELINK_NEEDED`/`IDLE` (matches `references/auth-flow.md`). Customers checking `payload.status === "active"` from a webhook would never match. Now clearly distinguishes the two.
+- `references/auth-flow.md` + `references/sdk-quickstarts.md`: `link_expiry_mins` documented as "Default 30. Max 30." Actual range is 30–720 minutes (12 h) standard, up to 10080 (7 days) with `should_create_magic_link_url`. Customers needing longer sessions were told they couldn't have them. Aligned both files with the parent SKILL.
+- `merge-post-connection-enable-custom-fields` (v0.2.0): description said "Step 6 of post-connection" but parent calls it Step 5. Aligned.
+- Webhook timeout: SKILL.md and two `platform-overview.md` references said 30s; the dedicated `references/webhooks.md` says 10s with "respond under 5s." Aligned all five sites to **10s timeout, ACK in <5s, 5 retries over ~1h with exponential backoff**.
+- `merge-onboarding` (v0.5.0) Step 6: hardcoded `merge.crm.contacts.list` examples without the "replace `.crm` with your category" disclaimer that every earlier step carries. HRIS/ATS/Ticketing customers copy-pasting would silently query the wrong category and get empty arrays with no error. Disclaimer + inline `// replace .crm + .contacts` comments restored.
+- `public_token` TTL documented three different ways (`~minutes`, `~10 min`, `30 minutes`). Aligned to **~10 min** with synchronous-exchange guidance everywhere.
+- `merge-onboarding` (v0.5.0) Step 6 first-API-call: silently assumed `account_token` was already in scope. Added one-line "Where does `account_token` come from?" callout pointing at Step 5 persistence or the Test Linked Accounts dashboard.
+- `README.md` Multi-Tool Support table: said Antigravity/Hermes install at `~/.gemini/...` and `~/.hermes/...` but `convert.sh` writes to `<target>/.gemini/...` and `<target>/.hermes/...` (project-relative, not home-relative). Updated to show both options with the explicit `--target $HOME` invocation for the user-global path.
+
+### Added
+
+- `CHANGELOG.md`: backfilled entries for `v0.5.0` (onboarding rewrite + 47-item audit pass) and `v0.4.3` (8-bug customer-simulation fix + inline schemas), based on git log of commits between bumps.
+
 ## [0.7.2] — 2026-05-01
 
 Pre-customer hygiene fixes.
@@ -84,6 +104,30 @@ Post-link friction pass. Surfaced from a from-scratch developer build of a ticke
 - `merge-link-setup-database` (v0.2.0): `account_token` column should be `TEXT`, not a fixed `VARCHAR`; tokens can exceed 100 chars and tight columns truncate silently in some drivers.
 - `merge-post-connection-implement-relinking` (v0.2.0): "Two relink paths" distinction — credentials revoked at source preserves `merge_account_id`; Linked Account deleted from dashboard creates a new one. "Delete + Reconnect" is not equivalent to "Reconnect."
 - `implementing-merge-sync` (v0.2.0) and the polling skills (initial v0.2.0, subsequent v0.2.0), plus `references/sync-fundamentals.md` and `references/platform-overview.md`: top-of-doc callout that pseudo-code uses snake_case (HTTP shape) while SDKs return camelCase. No pseudo-code rewritten — callout disambiguates.
+
+## [0.5.0] — 2026-04-30
+
+Onboarding skill rewrite + cross-skill audit pass. ~47 audit items addressed across `merge-onboarding`, the implementation skills, and reference docs.
+
+### Changed
+
+- `merge-onboarding` (v0.2.0): full rewrite — new step structure, embedded SDK + HTTP examples for every API call, `Troubleshooting` section with SYMPTOM/CAUSE/FIX entries, hardcoded provider names removed in favor of category-substitution comments.
+- 13 implementation skills + 4 reference docs: inline schemas instead of "see the docs"; SDK type warnings (e.g., `account-token.integration` is an SDK model, `account-details.integration` is a string); error handling patterns added.
+
+### Fixed
+
+- Documented `link_token` expiry ranges (default 30, max 720, up to 10080 for Magic Link).
+- Clarified `public_token` TTL is short and to exchange synchronously inside `onSuccess`.
+- Removed an internal `AUDIT_FIXES.md` working doc that wasn't intended to ship.
+
+## [0.4.3] — 2026-04-29
+
+Two follow-up fixes after a customer simulation run on `merge-onboarding`.
+
+### Fixed
+
+- `merge-onboarding`: 8 bugs surfaced by an end-to-end customer build (token-flow ordering, response shape mismatches, frontend gating, error handling).
+- Inline response schemas + SDK type warnings backfilled into the implementation skills; skill-writing principles documented in `CONTRIBUTING.md`.
 
 ## [0.4.0] — 2026-04-20
 
