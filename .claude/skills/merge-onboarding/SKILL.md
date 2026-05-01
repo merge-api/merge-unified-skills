@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Merge Integration Assistant
@@ -173,6 +173,8 @@ app.post("/api/merge/link-token", async (req, res) => {
 
 > **Multi-category integrations.** If the same end-user needs to connect to more than one category (e.g., CRM + ATS), generate a separate `link_token` per category. Each category becomes its own Linked Account with its own `account_token` — track them as separate rows keyed by `(end_user_origin_id, category)`. Don't pass multiple categories in a single `link_token` unless you've confirmed the UX with Merge.
 
+> **Two integrations in the SAME category for the same end-user.** Merge keys Linked Accounts on `(end_user_origin_id, category)` — call `link_token.create` twice with the same pair and the second call hits the relink flow, not a new connection. To support "ops uses Jira AND eng uses GitLab" under one customer, append a stable disambiguator to `end_user_origin_id`: `${customer_id}:${integration_slug}` (e.g. `acme-corp:jira`, `acme-corp:gitlab`). Treat the suffix as part of the canonical ID — never compute it on the fly with a random or counter value, or you'll create duplicate Linked Accounts on every reconnect. The cleaner alternative when you can scope it up front is the **Marketplace pattern** (see `/merge-unified:merge-link-implement-frontend-marketplace`), where each integration is a distinct user choice.
+
 ## Step 4: Open Merge Link (frontend)
 
 ### First run: use the Test integration
@@ -180,6 +182,8 @@ app.post("/api/merge/link-token", async (req, res) => {
 For your first build, select the **"Test" integration** inside Merge Link. It accepts any credentials and creates a Linked Account with sample data — no real provider account needed. This lets you verify the full flow before dealing with real provider sandboxes.
 
 To test API calls without going through Merge Link at all, create a **Test Linked Account** from https://app.merge.dev/linked-accounts/test and use its `account_token` directly in Step 6.
+
+⚠️ **Real-named integrations behave like Test in test mode.** With a `test_xxx` API key, picking GitLab, Jira, Linear, etc. in Merge Link skips real OAuth and returns a shared Merge demo dataset (the same sample tickets/contacts/etc. across every Linked Account you create). This is by design. It means **you cannot validate cross-customer data isolation visually with a test key** — different `account_token`s, same data. Use a `production_xxx` key + real provider accounts to exercise true isolation.
 
 > **No frontend?** If you're building a B2B integration with no customer-facing UI, use **Magic Link** — a hosted URL your customer opens to complete auth. See `references/auth-flow.md`.
 
@@ -238,6 +242,8 @@ function ConnectButtonInner({ linkToken }: { linkToken: string }) {
 
 `onSuccess` fires with a **public_token** — a one-time token. Send it and the `end_user_origin_id` to your backend immediately. The TTL is short (treat it as ~minutes, not hours) and isn't formally documented as a contract — design your code to exchange immediately rather than store and retry later.
 
+⚠️ **`onSuccess` is not the source of truth.** Merge creates the Linked Account on its side as soon as OAuth succeeds — *regardless* of whether your `/api/merge/exchange` ever runs. If the user closes the modal before exchange completes (network blip, accidental close, Finish-button skipped), you end up with an account on Merge that your DB doesn't know about. Reopening Merge Link with the same `end_user_origin_id` then shows "You're connected!" with no integration picker, looking like a frontend bug. **Production-grade fix:** subscribe to the `linked_account.created` webhook and create your local row from the webhook handler, not just from `onSuccess`. The `onSuccess` exchange becomes the fast path; the webhook is the backstop that closes the race. See Step 7.
+
 ## Step 5: Exchange public_token for account_token (backend)
 
 ### Linked Account states
@@ -288,7 +294,17 @@ def exchange_token():
 app.post("/api/merge/exchange", async (req, res) => {
   const { publicToken, endUserOriginId } = req.body;
   const merge = new MergeClient({ apiKey: process.env.MERGE_API_KEY });
-  const result = await merge.crm.accountToken.retrieve(publicToken);
+
+  // Wrap the SDK call. A reused or expired public_token throws MergeError 404 —
+  // unhandled, this kills the Node process and your dev server stops responding.
+  let result;
+  try {
+    result = await merge.crm.accountToken.retrieve(publicToken);
+  } catch (e: any) {
+    console.warn("[exchange] retrieve failed:", e?.statusCode, e?.body?.detail);
+    return res.status(400).json({ error: "exchange_failed", detail: e?.body?.detail });
+  }
+
   const integrationName = result.integration?.name ?? null;
   const { rowCount, rows } = await db.query(
     `UPDATE linked_accounts SET account_token=$1, integration_name=$2, merge_account_id=$3,
@@ -298,13 +314,18 @@ app.post("/api/merge/exchange", async (req, res) => {
   if (!rowCount) return res.status(404).json({ error: "No pending record" });
   res.json({ status: "connected", integration: integrationName, linkedAccountId: rows[0].id });
 });
+
+// Dev-server backstop — keeps Express alive on unhandled SDK errors so a bad
+// request doesn't take down the whole process. NOT a substitute for per-request try/catch.
+process.on("unhandledRejection", (e) => console.error("[unhandledRejection]", e));
+process.on("uncaughtException",  (e) => console.error("[uncaughtException]", e));
 ```
 
 > **SDK objects vs JSON:** `result.integration` is a pydantic model (Python) / typed object (Node), not a plain dict. Use `.name` for the string. Don't pass the raw object to `jsonify()` / `res.json()`.
 
 ## Step 6: Make your first API call
 
-Two headers on every call: `Authorization: Bearer YOUR_API_KEY` + `X-Account-Token: ACCOUNT_TOKEN`. SDKs handle this when you pass `account_token` at init.
+Two headers on every call — both reads AND writes: `Authorization: Bearer YOUR_API_KEY` + `X-Account-Token: ACCOUNT_TOKEN`. SDKs handle this when you pass `account_token` at init. Forgetting `X-Account-Token` on a write returns `401` with no clear hint that the missing header is the cause.
 
 ### Always paginate
 
@@ -352,13 +373,35 @@ Fields are NOT all strings. Some are arrays of nested objects:
 
 Full schemas: `references/common-models.md`.
 
+### Writing data back
+
+Write operations (`tickets.create`, `contacts.create`, etc.) return a triple, not just the created object:
+
+```typescript
+const result = await merge.ticketing.tickets.create({
+  model: { name: "Bug: login failure" },
+});
+// result.model     → the created object on the provider side (may be partial)
+// result.warnings  → array of provider-side issues that did NOT block creation
+// result.errors    → array of structured errors (rare; usually warnings, not errors)
+
+if (result.warnings?.length) {
+  console.warn("provider rejected fields:", result.warnings);
+  // e.g. [{ source: { pointer: "/model/collections" }, title: "Required field missing" }]
+}
+```
+
+⚠️ **Provider field requirements differ from Common Model fields.** The Common Model schema lets you submit `{ name }` and the SDK accepts it, but the underlying provider may require additional fields (e.g. GitLab tickets need `collections`). Missing required fields show up in `result.warnings`, **not** as a thrown error. Always inspect `result.warnings` before treating a write as successful.
+
 ## Step 7: Set up webhooks (recommended)
 
 **Default sync cadence:** 24 hours in production (configurable per Linked Account).
 
 Configure in dashboard:
-- **Merge → Your app** (sync-completed events, Linked Account changes): https://app.merge.dev/configuration/webhooks/emitters
-- **Third-party → Merge** (real-time updates from source providers): https://app.merge.dev/configuration/webhooks/receivers
+- **Emitters** (Merge → your app — sync-completed events, Linked Account lifecycle, what most apps want): https://app.merge.dev/configuration/webhooks/emitters
+- **Receivers** (third-party provider → Merge — real-time updates from Jira/Salesforce/etc. for sub-24h freshness on supported providers): https://app.merge.dev/configuration/webhooks/receivers
+
+> **Local dev tunnel hostnames rotate.** `cloudflared tunnel --url localhost:3000` (default quick mode) and `ngrok http 3000` (free tier) issue a fresh random subdomain on every restart, breaking any emitter URL you've already configured in the dashboard. For repeated dev work, use a **named cloudflared tunnel** (`cloudflared tunnel create` + DNS) or an **ngrok reserved domain** so the URL is stable across restarts.
 
 ⚠️ **The "Send test" button sends a connectivity ping, NOT a real event.** You'll see `{"response": "Success! This URL will be notified."}` — your handler will get `event_type=undefined`. This is normal. To test real events, reconnect via Merge Link with the Test integration.
 
@@ -410,13 +453,15 @@ More webhook event types and payload schemas: `references/webhooks.md`.
 - [ ] Webhook listeners with HMAC-SHA256 base64url signature verification
 - [ ] Async webhook processing (queue — Merge retries on >30s response)
 - [ ] Pagination on all list endpoints (cursor loop)
-- [ ] API error handling per status: 401 → relink, 403 → enable scope at https://app.merge.dev/common-models/{category}, 429 → exponential backoff, 5xx → retry then alert
+- [ ] API error handling per status: 401 → relink, 403 → enable scope at https://app.merge.dev/configuration/common-model-scopes, 429 → exponential backoff, 5xx → retry then alert
 - [ ] Encrypt `account_token` at rest (KMS / pgcrypto)
 
 ### Configuration
-- [ ] Common Model scopes enabled at https://app.merge.dev/common-models/{category}
+- [ ] Common Model scopes enabled at https://app.merge.dev/configuration/common-model-scopes
 - [ ] **Selective Sync** configured for end-users with large datasets — filters at the source so Merge fetches only what you need (configure per Linked Account in the dashboard)
 - [ ] Tested with a production Linked Account (not just sandbox)
+
+⚠️ **Default scopes are minimal and category-specific.** A fresh Ticketing org has Ticket, Contact, Tag, Role, Team, Collection, Permission, RemoteFieldClass enabled by default — and User, Account, Project, Comment, Attachment, Viewer **disabled**. Most ticketing dashboards need User (resolve assignees) and Comment (ticket replies); both off until you flip them. Other categories have different defaults — verify yours at the URL above before assuming a query will return data.
 
 Switch from `test_xxx` to `production_xxx` key and ship.
 
@@ -440,7 +485,7 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 ---
 
 **SYMPTOM:** API call returns an empty `results` array.
-**CAUSE:** Diagnose in order: (1) Common Model scope not enabled → enable at https://app.merge.dev/common-models/{category}. (2) Initial sync still running → check `GET /sync-status`, look for `is_initial_sync: true` with `status: "SYNCING"` (can take 30 min to hours). (3) Sync failed → check Linked Account detail page.
+**CAUSE:** Diagnose in order: (1) Common Model scope not enabled → enable at https://app.merge.dev/configuration/common-model-scopes. (2) Initial sync still running → check `GET /sync-status`, look for `is_initial_sync: true` with `status: "SYNCING"` (can take 30 min to hours). (3) Sync failed → check Linked Account detail page.
 **FIX:** Most common is #1. Enable the scope and re-check.
 
 ---
@@ -484,6 +529,30 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 **SYMPTOM:** Linked Account shows "relink_needed" or "incomplete".
 **CAUSE:** End-user revoked access or credentials expired.
 **FIX:** Generate new link_token with same `end_user_origin_id`, re-open Merge Link.
+
+---
+
+**SYMPTOM:** Reopening Merge Link shows "You're connected!" with no integration picker, but your DB has no record of the connection.
+**CAUSE:** OAuth completed on Merge's side but your `/exchange` never ran (modal closed early, network error, Finish-button skipped). Merge has the Linked Account; your DB doesn't.
+**FIX:** Reconcile from the `linked_account.created` webhook (production-correct), or delete the orphan at https://app.merge.dev/linked-accounts/test and reconnect (dev shortcut).
+
+---
+
+**SYMPTOM:** After clicking Reconnect, a new Linked Account row appears in your DB instead of the broken one being repaired.
+**CAUSE:** Your reconnect handler called the regular connect flow, which generated a fresh `end_user_origin_id` (or appended a counter suffix) instead of reusing the broken row's exact value.
+**FIX:** Reconnect must pass the broken row's `end_user_origin_id` **verbatim** to `link_token.create` — never compute a new one.
+
+---
+
+**SYMPTOM:** `tickets.create()` (or any write) returns successfully but the created object is missing fields you sent.
+**CAUSE:** The provider rejected fields silently. Merge surfaces these as `result.warnings`, not as a thrown error.
+**FIX:** Inspect `result.warnings` after every write. For provider-required fields not in the Common Model, send them via `remote_fields` or use Field Mappings. For GitLab tickets specifically, include `collections`.
+
+---
+
+**SYMPTOM:** After deleting a Linked Account in the dashboard and clicking Reconnect, you get a new `merge_account_id` and lose all sync history.
+**CAUSE:** "Delete + Reconnect" is not equivalent to "Reconnect." When the Linked Account is deleted, there's nothing on Merge's side to repair — relink degrades to a fresh connect with a brand new `merge_account_id` and `account_token`.
+**FIX:** For credential issues (token expired, user deauthorized at source), use Reconnect — never Delete first. Delete only when you genuinely want to start over. See `/merge-unified:merge-post-connection-implement-relinking`.
 
 ---
 

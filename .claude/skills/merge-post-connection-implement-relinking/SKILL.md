@@ -4,7 +4,7 @@ description: Implement relinking as a first-class in-product flow and surface de
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Relinking and Detailed Error Messaging
@@ -45,6 +45,17 @@ Prompt the codebase to implement relinking with multiple entry points and clean 
 > **Success state:** Set `status = "active"` in `linked_accounts`, clear any stored error state (error category, error detail fields).
 >
 > **Failure handling:** Show the specific error returned; do not wipe or overwrite the existing `linked_accounts` record.
+
+### Two relink paths, different outcomes
+
+There are two reasons a Linked Account ends up needing reconnection. They look identical in your UI but produce different outcomes — make sure your reconnect copy doesn't promise restoration in the second case:
+
+| Trigger | What's still on Merge's side | What relink does | Result |
+|---|---|---|---|
+| **Credentials revoked at source** (token expired, user deauthorized in Jira/Salesforce/etc.). Linked Account `status = "relink_needed"` | Linked Account record + sync history fully intact | Updates credentials in place using the same `end_user_origin_id` | **Same `merge_account_id`, same `account_token` (may stay valid), sync history preserved** |
+| **Linked Account deleted from the Merge dashboard** | Nothing — record gone | Degrades to a fresh connect under the same `end_user_origin_id` | **New `merge_account_id`, new `account_token`, sync history starts over** |
+
+⚠️ **"Delete + Reconnect" is not equivalent to "Reconnect."** If your UI offers a Delete button alongside Reconnect, make sure users understand that Delete is not a "force refresh" — it permanently severs the Linked Account, including any references to the old `merge_account_id` (e.g. webhook payloads stored before the delete will become orphans). Reserve Delete for genuine "remove this integration" flows.
 
 ---
 

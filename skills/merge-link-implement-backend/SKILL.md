@@ -4,7 +4,7 @@ description: Implement the four Merge Link backend API endpoints: link token cre
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implement Merge Link Backend
@@ -26,7 +26,9 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 ### Endpoint 1: POST /api/merge/create-link-token
 
 1. Read `category` and optional `integration` from request body
-2. Generate `end_user_origin_id` — use a deterministic format like `{org_id}_{category}` (one per category) or `{org_id}_{category}_{integration_slug}` (multiple per category)
+2. Generate `end_user_origin_id` deterministically — never random or counter-suffixed. Pick a format up-front and never change it:
+   - **One integration per category per customer** (most common): `{org_id}_{category}` (e.g. `acme_ticketing`)
+   - **Multiple integrations per category per customer** (e.g. ops uses Jira, eng uses GitLab under the same Acme account): `{org_id}_{category}_{integration_slug}` (e.g. `acme_ticketing_jira`, `acme_ticketing_gitlab`). The integration_slug must be picked **before** opening Merge Link so the origin_id is stable across reconnects — see the Marketplace pattern in `merge-link-implement-frontend-marketplace`. Do NOT compute disambiguators on the fly with counters or timestamps; you'll create duplicate Linked Accounts on every reconnect.
 3. **Create the `linked_accounts` record NOW** with `status = "pending"` — do this BEFORE calling the Merge API (prevents duplicate accounts if the modal is opened multiple times)
 4. If a pending record already exists for this `end_user_origin_id`, reuse it instead of creating a duplicate. **Dedup pattern:** use `INSERT ... ON CONFLICT (end_user_origin_id) WHERE status = 'pending' DO NOTHING`, or delete the prior pending row before inserting. Without this, a user who opens Link, abandons, and opens again creates two pending rows — and the exchange handler may match the wrong one
 5. Call `POST https://api.merge.dev/api/{category}/v1/link-token` with `Authorization: Bearer {MERGE_API_KEY}`, passing `end_user_origin_id`, `end_user_email_address`, `end_user_organization_name`, `categories`, and optional `integration`
@@ -70,6 +72,37 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 2. Fetch the existing `linked_accounts` record — verify it belongs to the current user
 3. Call the same link token generation logic using the **stored `end_user_origin_id`** — do NOT generate a new ID or create a new DB record
 4. Return `{ link_token }` to the frontend
+
+**The reconnect data flow that almost everyone gets wrong on the first try:**
+
+```typescript
+// Server-side: pull the broken row's exact end_user_origin_id and reuse it.
+app.post("/api/merge/relink-integration", async (req, res) => {
+  const { linkedAccountId } = req.body;
+  const { rows } = await db.query(
+    `SELECT end_user_origin_id, end_user_email, organization_name, category
+       FROM linked_accounts WHERE id = $1`,
+    [linkedAccountId],
+  );
+  const broken = rows[0];
+  // Reuse the stored origin_id verbatim — do NOT compute a new one.
+  const merge = new MergeClient({ apiKey: process.env.MERGE_API_KEY });
+  const response = await merge[broken.category].linkToken.create({
+    endUserOriginId: broken.end_user_origin_id,    // KEY POINT — same value
+    endUserEmailAddress: broken.end_user_email,
+    endUserOrganizationName: broken.organization_name,
+    categories: [broken.category],
+  });
+  // Flip the row back to pending so /exchange updates it (instead of inserting a new row).
+  await db.query(
+    `UPDATE linked_accounts SET status='pending', updated_at=NOW() WHERE id=$1`,
+    [linkedAccountId],
+  );
+  res.json({ link_token: response.linkToken });
+});
+```
+
+⚠️ Wiring the Reconnect button to your regular `create-link-token` endpoint will *silently* create a duplicate Linked Account every time a user clicks Reconnect — your app keeps working, but you accumulate orphans. The Reconnect path must call this dedicated endpoint with the broken row's id, and this endpoint must reuse the stored `end_user_origin_id` exactly.
 
 ### Endpoint 4: POST /api/merge/delete-integration
 

@@ -1,5 +1,7 @@
 # Merge Platform Overview
 
+> **Field-name convention used in this doc.** Pseudo-code and JSON examples below show the **raw HTTP/JSON response shape** (snake_case: `is_initial_sync`, `model_name`, `last_sync_result`, `modified_at`, `remote_data`). The Merge SDKs (Node, Python typed client, Java, Go) auto-convert these to language-idiomatic names — in Node, `is_initial_sync` becomes `isInitialSync`, `modified_at` becomes `modifiedAt`, etc. Write your code in the convention your SDK uses; use snake_case only when calling the REST API directly.
+
 ## What is Merge.dev?
 
 Merge is a unified API platform that eliminates the need to build and maintain individual integrations with different vendor APIs. Instead of handling dozens of different schemas, auth methods, versions, and edge cases, you integrate once with Merge.
