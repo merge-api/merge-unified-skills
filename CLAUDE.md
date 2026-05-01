@@ -15,9 +15,9 @@ Plugin metadata in `.claude-plugin/{plugin,marketplace}.json`. Skills under `ski
 1. Copy `.claude/skills/_template/` to `skills/<new-skill-name>/`.
 2. Copy the same to `.claude/skills/<new-skill-name>/` (for manual install path).
 3. Edit `SKILL.md` frontmatter: `name`, `description` (with many trigger phrases), `metadata.author: Merge`, `metadata.version: 0.1.0`.
-3. Move long content into `references/*.md`.
-4. Run `bash scripts/check-skill.sh` before committing.
-5. Bump version in `.claude-plugin/plugin.json` and add a `CHANGELOG.md` entry.
+4. Move long content into `references/*.md`.
+5. Run `bash scripts/check-skill.sh` before committing.
+6. Bump version in `.claude-plugin/plugin.json` and add a `CHANGELOG.md` entry.
 
 Read `.claude/skills/merge-onboarding/SKILL.md` as the reference for how a finished skill looks: clear "When to use", explicit step-by-step body, embedded SDK + HTTP examples, Troubleshooting section with SYMPTOM/CAUSE/FIX entries.
 
