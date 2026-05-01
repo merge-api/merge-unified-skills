@@ -80,7 +80,7 @@ jobs:
             Read these files first — they are the source of truth:
             - `CLAUDE.md` — short-form repo conventions (layout, style rules, don't-do list)
             - `CONTRIBUTING.md` — full contributor guide (skill writing principles, PR workflow, publish flow)
-            - `skills/_template/SKILL.md` (or `.claude/skills/_template/SKILL.md` if it lives there) — the canonical skeleton
+            - `.claude/skills/_template/SKILL.md` — the canonical skeleton (intentionally only in the `.claude/skills/` mirror, not in `skills/`)
             - `skills/merge-onboarding/SKILL.md` (or `.claude/skills/merge-onboarding/SKILL.md`) — the reference for a finished skill
 
             ## Step 2: Get the diff and read changed files
