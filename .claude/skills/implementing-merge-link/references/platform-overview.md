@@ -170,7 +170,7 @@ For the **first sync** after a user connects their integration, you must wait fo
 - **is_initial_sync == false**: If you check after initial sync already completed, this flag signals readiness
 
 **Initial Sync Pattern**:
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -200,7 +200,7 @@ After the initial sync completes, subsequent syncs can accept partial data since
 - **is_initial_sync == false**: Indicates initial sync completed previously
 
 **Subsequent Sync Pattern**:
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -221,7 +221,7 @@ for each model in sync_status.results:
 
 #### Combined Implementation Pattern
 
-```
+```text
 for each model in sync_status.results:
     if model.status == "DISABLED":
         continue
@@ -390,7 +390,7 @@ Best for granular, model-specific sync notifications during subsequent syncs.
 - If newer, trigger incremental data fetch
 
 **Webhook Processing Pattern**:
-```
+```text
 1. Receive webhook with sync_status data
 2. Extract last_sync_finished timestamp
 3. Compare with your stored last_sync_finished
@@ -459,7 +459,7 @@ Use webhooks as primary mechanism with polling as backup:
 After the initial sync, use `modified_after` and `modified_before` query parameters to fetch only records that changed within specific time windows.
 
 **Pattern**:
-```
+```text
 GET /api/{category}/v1/{model}?modified_after=2024-01-15T10:30:00Z&modified_before=2024-01-15T22:46:41Z
 ```
 
@@ -492,7 +492,7 @@ You need to track TWO timestamps per model:
 
 **Example Flow**:
 
-```
+```text
 # Initial state: No previous fetch
 Poll /sync-status → last_sync_finished = 2024-01-15T10:30:00Z
 Detect: New data available (first fetch)
@@ -534,7 +534,7 @@ Beyond automatic syncing, Merge allows manual sync triggers when you need immedi
 - Recovery after extended downtime
 
 **API Endpoint**:
-```
+```text
 POST /api/{category}/v1/sync-status/resync
 ```
 
@@ -601,7 +601,7 @@ The sync frequency directly impacts your polling and data fetching strategy:
 
 Consider adapting your polling interval based on the integration's sync frequency:
 
-```
+```text
 if next_sync_start - last_sync_start < 1 hour:
     # High-frequency integration
     poll_interval = 5-10 minutes
