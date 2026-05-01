@@ -4,6 +4,15 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-05-01
+
+Pre-customer hygiene fixes.
+
+### Fixed
+
+- `implementing-merge-post-connection/references/post-connection-fundamentals.md`: a sample webhook payload had a stale test endpoint as the `target` value; replaced with the standard `yourapp.com/webhooks/merge` placeholder used in sibling reference files so the sample reads consistently across the repo.
+- `CHANGELOG.md`: removed two entries (`[0.4.2]` and `[0.4.1]`) that documented changes to a skill which was briefly in this repo and later removed. Those entries described internal-only conventions and tooling that aren't part of the customer-facing Merge Unified API skill set.
+
 ## [0.7.1] — 2026-05-01
 
 Focus pass plus mirror-discipline guardrail. Drops the standalone Apideck migration tool to keep this repo focused on the Merge Unified API teaching surface, and adds CI enforcement that the `skills/` and `.claude/skills/` mirrors stay byte-identical.
@@ -75,19 +84,6 @@ Post-link friction pass. Surfaced from a from-scratch developer build of a ticke
 - `merge-link-setup-database` (v0.2.0): `account_token` column should be `TEXT`, not a fixed `VARCHAR`; tokens can exceed 100 chars and tight columns truncate silently in some drivers.
 - `merge-post-connection-implement-relinking` (v0.2.0): "Two relink paths" distinction — credentials revoked at source preserves `merge_account_id`; Linked Account deleted from dashboard creates a new one. "Delete + Reconnect" is not equivalent to "Reconnect."
 - `implementing-merge-sync` (v0.2.0) and the polling skills (initial v0.2.0, subsequent v0.2.0), plus `references/sync-fundamentals.md` and `references/platform-overview.md`: top-of-doc callout that pseudo-code uses snake_case (HTTP shape) while SDKs return camelCase. No pseudo-code rewritten — callout disambiguates.
-
-## [0.4.2] — 2026-04-27
-
-### Changed
-
-- `oncall-handoff` (v0.3.2): Title format aligned to the team's `@Month Day, Year` convention (e.g. `@April 27, 2026`) — previously `On-Call Handoff — Month Day, Year`. In Notion mode the title is set on the `Handoff date` property and not duplicated in page content.
-- `oncall-handoff` (v0.3.2): Step 6 "Notion mode mechanics" now spells out the required `notion-fetch` → `data_source_id` → `notion-create-pages` flow (instead of the misleading "use database ID as parent"), which the create-pages tool rejects.
-
-## [0.4.1] — 2026-04-27
-
-### Changed
-
-- `oncall-handoff` (v0.3.1): Notion is now the only routine output target. Local markdown file output is reserved as a fallback for when the Notion connector is unreachable. Removed the routine "Notion or local file?" prompt from first activation and the "user explicitly requested local" branch from Step 2.
 
 ## [0.4.0] — 2026-04-20
 
