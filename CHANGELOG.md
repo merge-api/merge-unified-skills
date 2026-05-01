@@ -4,6 +4,33 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-01
+
+Skill consolidation pass. Reduced the surface from 23 functional skills (24 with `_template`) to 17 (18 with `_template`) by folding thin context-loading stubs into their parent orchestrators, merging structurally identical sync variants, combining the two settings skills, and generalizing the HRIS-only filtering skill to cover all categories. No content lost — every step still has a home, just inside fewer skills. Vertical bias reduced: data-scope filtering now covers HRIS, ATS, CRM, Ticketing, and Accounting on equal footing.
+
+### Removed
+
+- `merge-link-set-context`, `merge-post-connection-set-context`, `merge-sync-set-context` — folded into Step 1 of their parent `implementing-merge-{link,post-connection,sync}` orchestrators. The three were structurally identical "read these docs, scan codebase, confirm readiness" stubs; promoting them inline removes a layer of indirection without losing the procedure.
+- `merge-sync-implement-initial-polling`, `merge-sync-implement-subsequent-polling` — merged into a single `merge-sync-implement-polling` skill that covers both phases. Same job branches on `initial_sync_complete`.
+- `merge-sync-implement-initial-webhooks`, `merge-sync-implement-subsequent-webhooks` — merged into a single `merge-sync-implement-webhooks` skill. Same endpoint handles initial and subsequent events.
+- `merge-post-connection-configure-integration-settings` — folded into `merge-post-connection-build-settings-page`. The settings page (UI) and its persistence model are now treated as one artifact; builders think of "the settings page" as one thing.
+- `merge-post-connection-hris-employee-filtering` — replaced by the category-agnostic `merge-post-connection-data-scope-filtering` (see Added).
+
+### Added
+
+- New skill: `merge-sync-implement-webhooks` (v0.1.0) — production-recommended sync trigger via a single Merge webhook endpoint. Covers initial and subsequent syncs in one place with HMAC-SHA256 verification, async background processing, and bounded `modified_after` / `modified_before` fetches. Description and self-introduce explicitly position webhooks as primary and polling as fallback.
+- New skill: `merge-sync-implement-polling` (v0.1.0) — single scheduled job covering both initial sync detection and subsequent incremental fetches. Framed as a development starting point and a production fallback alongside webhooks, not as an equal alternative.
+- New skill: `merge-post-connection-data-scope-filtering` (v0.1.0) — same pre-storage vs post-storage decision framework as the deleted HRIS-only skill, but with parallel filter parameter tables for HRIS (employee filtering), ATS (candidate / application), CRM (account / contact / opportunity), Ticketing (project / status / priority / assignee), and Accounting.
+
+### Changed
+
+- `implementing-merge-link` (v0.2.0): Step 1 now runs inline instead of invoking a separate `merge-link-set-context` skill. Step 2–4 unchanged.
+- `implementing-merge-post-connection` (v0.2.0): Step 1 inlined. Step 2 is now the consolidated settings skill (build + configure together). Step 7 (HRIS-only filtering) replaced by Step 6 (category-agnostic data-scope filtering); description updated accordingly.
+- `implementing-merge-sync` (v0.3.0): Step 1 inlined. Step routing reorganized from 2a/2b/3a/3b (initial/subsequent × polling/webhooks) to 2a (webhooks PRIMARY) + 2b (polling fallback) + Step 3 (run both for production reliability). Frontmatter description and self-introduce both lead with the webhooks-primary framing.
+- `merge-post-connection-build-settings-page` (v0.2.0): Absorbed the configure-integration-settings backend (settings persistence, `setup_complete` state, GET/PATCH `/api/merge/settings` endpoints) as Component 4. The UI and the persistence model now ship together.
+- `merge-onboarding` (v0.4.0): Stale `v0.2.0` self-introduce string corrected to `v0.4.0`. Connect-button code example genericized from "Connect your CRM" to "Connect your provider" with a category-substitution comment. No other content changes.
+- `merge-link-setup-database`, `merge-post-connection-enable-custom-fields`: Cross-references to the deleted set-context skills updated to point at Step 1 of the parent orchestrator.
+
 ## [0.6.0] — 2026-05-01
 
 Post-link friction pass. Surfaced from a from-scratch developer build of a ticketing app that hit ~14 distinct gaps where skills were silent, ambiguous, or pointed at the wrong place. All edits target the first 30 minutes after the connect button works — the period most likely to make a developer abandon.

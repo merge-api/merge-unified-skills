@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Merge Link
@@ -17,7 +17,7 @@ Merge Link is a pre-built modal that handles OAuth and third-party authenticatio
 
 ## First activation: self-introduce
 
-> I'm the implementing-merge-link skill (v0.1.0). I'll guide you through connecting your application to Merge Link — database schema, backend endpoints, and the frontend UI. Are you building a single connect button, or an app marketplace where users browse integrations?
+> I'm the implementing-merge-link skill (v0.2.0). I'll guide you through connecting your application to Merge Link — database schema, backend endpoints, and the frontend UI. Are you building a single connect button, or an app marketplace where users browse integrations?
 
 ## Prerequisites
 
@@ -27,25 +27,55 @@ Merge Link is a pre-built modal that handles OAuth and third-party authenticatio
 
 ## Implementation Steps
 
-Work through these steps in order. Each step invokes a focused sub-skill.
+Work through these steps in order. Steps 2–4 invoke focused sub-skills; Step 1 runs inline.
 
-1. **Load context** — invoke `merge-link-set-context`
-   Loads your codebase structure, existing schema, and Merge API reference so all subsequent steps have accurate context.
+### Step 1: Load context
 
-2. **Set up database** — invoke `merge-link-setup-database`
-   Creates the `linked_accounts` table (and any other required tables) to store Merge account tokens and connection metadata.
+Do **not** write any code in this step. Read the reference docs first, then scan the codebase, then confirm readiness.
 
-3. **Implement backend API** — invoke `merge-link-implement-backend`
-   Builds the server-side endpoints: generating Link tokens, exchanging public tokens for account tokens, and storing them.
+**1a. Read all three reference docs:**
 
-4. **Implement frontend** — choose one:
-   - **4a. Connect Button** — invoke `merge-link-implement-frontend-connect`
-     Adds a single "Connect" button that opens the Merge Link modal.
-   - **4b. Marketplace** — invoke `merge-link-implement-frontend-marketplace`
-     Builds an integration marketplace UI where users browse and connect multiple integrations.
-   Choose one OR the other based on your product's UX.
+- `references/platform-overview.md` — Core Merge concepts, auth flow, account lifecycle
+- `references/backend-implementation.md` — Backend API patterns, token exchange, database schema
+- `references/frontend-implementation.md` — Frontend UI patterns (Connect Button and Marketplace)
 
-> Always start with Step 1 to load context before implementing anything.
+Read each file completely before proceeding.
+
+**1b. Scan the codebase.** Ask the user first:
+
+> "I'll search your codebase for your tech stack, existing schema, and any Merge-related code. Ready to proceed?"
+
+Then identify:
+
+- Tech stack: language, framework, ORM
+- Existing database schema (migrations, models, or schema files)
+- Any existing Merge-related code (search for `merge`, `MERGE_API_KEY`, `account_token`)
+
+**1c. Confirm readiness** with a brief summary:
+
+1. Tech stack identified (language, framework, ORM)
+2. Merge docs loaded (list the three files read)
+3. Any existing Merge code found (or none)
+4. Ready to proceed to the next implementation step
+
+### Step 2: Set up database — invoke `merge-link-setup-database`
+
+Creates the `linked_accounts` table (and any other required tables) to store Merge account tokens and connection metadata.
+
+### Step 3: Implement backend API — invoke `merge-link-implement-backend`
+
+Builds the server-side endpoints: generating Link tokens, exchanging public tokens for account tokens, and storing them.
+
+### Step 4: Implement frontend — choose one
+
+- **4a. Connect Button** — invoke `merge-link-implement-frontend-connect`
+  Adds a single "Connect" button that opens the Merge Link modal.
+- **4b. Marketplace** — invoke `merge-link-implement-frontend-marketplace`
+  Builds an integration marketplace UI where users browse and connect multiple integrations.
+
+Choose one OR the other based on your product's UX.
+
+> Always complete Step 1 (load context) before starting Step 2.
 
 ## Troubleshooting
 
