@@ -52,7 +52,6 @@ Or just describe what you want — Claude will pick the right skill:
 - "Implement the Merge Link connect button"
 - "Set up webhook-based syncing with Merge"
 - "Build an integration settings page"
-- "Migrate from Apideck to Merge"
 
 ## Available Skills
 
@@ -60,10 +59,9 @@ Or just describe what you want — Claude will pick the right skill:
 |-------|---------|--------------|
 | **Merge Onboarding** | `/merge-unified:merge-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
 | **Integration Validator** | `/merge-unified:merge-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
-| **Migrate from Apideck** | `/merge-unified:migrate-from-apideck` | Detect Apideck SDK usage, map concepts to Merge equivalents, rewrite API calls, and flag behavioral differences. |
-| **Implementing Merge Link** | `/merge-unified:implementing-merge-link` | Full Merge Link implementation: database schema, backend API (link token, token exchange, relink, delete), and frontend UI. Guides you through 5 sub-steps: context loading, database setup, backend endpoints, and frontend (connect button or marketplace). |
-| **Implementing Merge Sync** | `/merge-unified:implementing-merge-sync` | Set up data syncing after a connection is established. Covers initial sync detection and incremental updates via polling or webhooks, with sub-steps for each approach. |
-| **Implementing Post-Connection** | `/merge-unified:implementing-merge-post-connection` | Build the post-connection experience: integration settings page, sync status UI, relinking broken connections, custom field mappings, and HRIS employee filtering. 7 sub-steps covering the full settings surface. |
+| **Implementing Merge Link** | `/merge-unified:implementing-merge-link` | Full Merge Link implementation: database schema, backend API (link token, token exchange, relink, delete), and frontend UI. Step 1 loads context inline; Steps 2–4 invoke focused sub-skills (database setup, backend endpoints, and frontend — connect button OR marketplace). |
+| **Implementing Merge Sync** | `/merge-unified:implementing-merge-sync` | Set up data syncing after a connection is established. Webhooks are the production-recommended primary; polling is the development starting point and a production fallback. A single skill per approach covers both initial and subsequent syncs. |
+| **Implementing Post-Connection** | `/merge-unified:implementing-merge-post-connection` | Build the post-connection experience: integration settings page (with persistence backend), sync status UI, relinking, custom field mappings, and category-aware data-scope filtering. 6 numbered steps; Step 1 loads context inline. |
 
 ## What You'll Need
 
@@ -109,7 +107,7 @@ For canonical install + initialization snippets in Java, Go, Ruby, and C#, see e
 
 ## Multi-Tool Support
 
-Convert all 23 skills to 9 AI coding tools with a single script.
+Convert all 16 skills to 9 AI coding tools with a single script.
 
 | Tool | Format | Install |
 |------|--------|---------|
@@ -137,7 +135,7 @@ Convert all 23 skills to 9 AI coding tools with a single script.
 ```
 
 Each tool gets:
-- All 23 skills converted to native format
+- All 16 skills converted to native format
 - Per-tool README with installable/pluggable steps
 - Reference docs preserved alongside skills
 - Zero manual conversion work

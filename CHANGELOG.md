@@ -4,6 +4,28 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-05-01
+
+Focus pass plus mirror-discipline guardrail. Drops the standalone Apideck migration tool to keep this repo focused on the Merge Unified API teaching surface, and adds CI enforcement that the `skills/` and `.claude/skills/` mirrors stay byte-identical.
+
+### Removed
+
+- `migrate-from-apideck` (skill) and its references (`apideck-patterns.md`, `concept-mapping.md`) — removed to keep the repo focused on the Merge Unified API. The Apideck → Merge migration tool sat outside the unified-API teaching surface this repo is meant to ship. The negative-trigger callout in `merge-onboarding`'s description ("Do NOT activate for ... questions about other unified API providers (Apideck, Finch, Codat, Kombo, Nango)") stays in place to deflect unrelated questions.
+
+### Added
+
+- `scripts/check-mirrors.sh` — verifies `skills/` and `.claude/skills/` are byte-identical (excluding `_template/`, which is contributor scaffolding and intentionally only lives in `.claude/skills/`). Wired into the existing `validate-skills.yml` CI workflow as a second job; also runnable locally.
+- `validate-skills.yml` workflow path triggers expanded to include `skills/**` (previously only triggered on `.claude/skills/**` changes — a path bug that meant edits to `skills/` could ship without frontmatter validation).
+
+### Fixed
+
+- Mirror drift in 4 reference files left over from commit `846dbcb` ("Fix code block language tags across skills and reference docs"), which updated only `skills/` and missed the `.claude/skills/` copies. The drift was invisible until the new `check-mirrors.sh` caught it. Files reconciled by copying `skills/` → `.claude/skills/`:
+  - `implementing-merge-link/references/backend-implementation.md`
+  - `implementing-merge-link/references/platform-overview.md`
+  - `implementing-merge-post-connection/references/post-connection-fundamentals.md`
+  - `merge-onboarding/references/auth-flow.md`
+- `README.md`: dropped the "Migrate from Apideck" example trigger and the table row; refreshed the post-consolidation skill descriptions for the three orchestrators (the table was still describing the pre-0.7.0 5-step / 7-step / per-approach-sub-skill structure); corrected stale "23 skills" count to "16 skills" in the Multi-Tool Support section.
+
 ## [0.7.0] — 2026-05-01
 
 Skill consolidation pass. Reduced the surface from 23 functional skills (24 with `_template`) to 17 (18 with `_template`) by folding thin context-loading stubs into their parent orchestrators, merging structurally identical sync variants, combining the two settings skills, and generalizing the HRIS-only filtering skill to cover all categories. No content lost — every step still has a home, just inside fewer skills. Vertical bias reduced: data-scope filtering now covers HRIS, ATS, CRM, Ticketing, and Accounting on equal footing.
