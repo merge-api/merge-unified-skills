@@ -4,7 +4,16 @@ All notable changes to this plugin are documented here. Format follows [Keep a C
 
 ## [Unreleased]
 
-## [0.7.3] — 2026-05-01
+## [0.7.4] — 2026-05-01
+
+Pre-release scan pass before sharing with prospects. External-doc verification turned up that `docs.merge.dev` migrated its URL structure under `/merge-unified/...`, breaking ~14 reference links in skill documentation. Also caught two example email addresses on the `merge.dev` domain (one a real internal address, the other a generic `test@`) and a couple of small typos in repo conventions.
+
+### Fixed
+
+- **Broken docs.merge.dev links (14 paths).** The Merge documentation site restructured under a `/merge-unified/...` namespace. Old paths under `/basics/`, `/guides/`, `/hris/`, `/merge-unified/link/`, and `/supplemental-data/` all 404. Each old URL was remapped to its current home, verified with a live fetch or the live sitemap. Includes the singular→plural shift in the field-mapping section (`field-mappings/` → `field-mapping/`) and the move from anchor URLs to dedicated endpoint pages (`/hris/sync-status/#sync_status_list` → `/merge-unified/hris/data-management/sync-status/list`). Affects `skills/implementing-merge-post-connection/references/post-connection-fundamentals.md` (13 URLs) and `skills/merge-onboarding/SKILL.md` (1 URL, retargeted to docs root since the surrounding label is generic "Merge docs").
+- **Example email addresses on the `merge.dev` domain.** `skills/implementing-merge-link/references/backend-implementation.md` had a real internal address (`ashwin.prakash@merge.dev`) and an `end_user_organization_name` of `"Merge"` in a worked sample. `skills/implementing-merge-post-connection/references/post-connection-fundamentals.md` used `test@merge.dev` as a generic placeholder. Replaced with `customer@example.com` and `Acme Corp` so prospects don't see real Merge personnel data in worked examples.
+- **`CLAUDE.md`: duplicate step number** — the "When asked to add a skill" list had `1, 2, 3, 3, 4, 5`. Renumbered to `1–6`.
+- **`.github/workflows/claude.yml` review prompt** — referenced `skills/_template/SKILL.md` (which doesn't exist; the template is intentionally only mirrored in `.claude/skills/_template/`). Updated to point at the correct path with the rationale inline.
 
 Customer-readiness pass. Eleven concrete inconsistencies and ambiguities surfaced from a final pre-ship audit. None are show-stoppers, but every one is the kind of friction that costs a developer 10–30 minutes of confusion or a support ticket.
 

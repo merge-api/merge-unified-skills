@@ -10,7 +10,7 @@
       "name": "merge-unified",
       "source": "./",
       "description": "Claude Code skills for integrating with and building on the Merge Unified API",
-      "version": "0.7.3",
+      "version": "0.7.4",
       "author": {
         "name": "Merge"
       }
