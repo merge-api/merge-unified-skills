@@ -17,7 +17,7 @@ Plugin metadata in `.claude-plugin/{plugin,marketplace}.json`. Skills under `ski
 3. Edit `SKILL.md` frontmatter: `name`, `description` (with many trigger phrases), `metadata.author: Merge`, `metadata.version: 0.1.0`.
 4. Move long content into `references/*.md`.
 5. Run `bash scripts/check-skill.sh` before committing.
-6. Bump version in `.claude-plugin/plugin.json` and add a `CHANGELOG.md` entry.
+6. Bump version in `.claude-plugin/plugin.json` (and `.claude-plugin/marketplace.json` to match).
 
 Read `.claude/skills/merge-onboarding/SKILL.md` as the reference for how a finished skill looks: clear "When to use", explicit step-by-step body, embedded SDK + HTTP examples, Troubleshooting section with SYMPTOM/CAUSE/FIX entries.
 

@@ -87,7 +87,6 @@ jobs:
 
             Get the PR diff. For each changed `SKILL.md` or reference doc, read the FULL file. Also read:
             - `.claude-plugin/plugin.json` (to check version bump)
-            - `CHANGELOG.md` (to check for an entry)
             - The other `SKILL.md` mirror if the repo still has both `skills/` and `.claude/skills/` directories
 
             ## Step 3: Review for skill quality
@@ -117,7 +116,7 @@ jobs:
 
             **4. PR hygiene** (per `CONTRIBUTING.md`)
             - `.claude-plugin/plugin.json` `version` bumped on every PR
-            - `CHANGELOG.md` has a new entry describing the change (under `[Unreleased]` or a new version)
+            - `.claude-plugin/marketplace.json` plugin version matches `plugin.json`
             - **One skill per PR** — flag if multiple new skills are introduced in this PR
             - If the repo still has the dual layout (`skills/` and `.claude/skills/`), check that both copies of a skill match exactly. Drift between the two is a bug.
 
@@ -137,7 +136,7 @@ jobs:
             - Reference: which file/section in `CLAUDE.md` or `CONTRIBUTING.md` this comes from
 
             Severity levels:
-            - 🔴 **Must fix** — frontmatter missing required keys, validator would fail, multiple skills in one PR, missing version bump or CHANGELOG entry
+            - 🔴 **Must fix** — frontmatter missing required keys, validator would fail, multiple skills in one PR, missing version bump
             - 🟡 **Should fix** — missing required section, weak description (few trigger phrases), production-only examples, hand-waving with "see the docs"
             - 💡 **Suggestion** — additional trigger phrases that would improve activation, more troubleshooting entries, opportunity to move long content to `references/`
 
@@ -149,7 +148,7 @@ jobs:
             - Skip linter-level issues (markdown formatting, trailing whitespace).
             - DO flag rule violations — these are project-specific conventions the team has decided on.
             - DO flag missing trigger phrases. Skills with weak `description:` fields don't activate when developers actually need them.
-            - For docs-only PRs (changes to `README.md`, `CHANGELOG.md`, `CLAUDE.md`, etc. without skill changes), focus on accuracy and consistency only — don't apply skill-quality rules.
+            - For docs-only PRs (changes to `README.md`, `CLAUDE.md`, etc. without skill changes), focus on accuracy and consistency only — don't apply skill-quality rules.
 
             IMPORTANT: Do NOT modify any code, create commits, or push changes. This is a read-only review.
           claude_args: |

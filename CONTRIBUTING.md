@@ -17,7 +17,6 @@ scripts/
 .github/workflows/
   validate-skills.yml   Runs check-skill.sh on every PR
 README.md               Public-facing intro
-CHANGELOG.md            Versioned release notes
 CLAUDE.md               Conventions for Claude Code working in this repo
 AGENTS.md               Same, for non-Claude AI agents
 LICENSE                 MIT
@@ -56,7 +55,7 @@ LICENSE                 MIT
 - One skill per PR (don't bundle multiple new skills).
 - PR description must include: what the skill does, who it's for, and one example user prompt that should activate it.
 - Squash-merge into `main`.
-- Bump `version` in `.claude-plugin/plugin.json` and add a `CHANGELOG.md` entry on every PR.
+- Bump `version` in `.claude-plugin/plugin.json` (and `.claude-plugin/marketplace.json` to match) on every PR.
 
 ## Local testing
 
@@ -83,7 +82,6 @@ When the skill set is ready for client/public consumption, **do not flip this pr
 Run from a clean checkout of `main`:
 
 - [ ] Remove `.claude/skills/_template/` (build-only scaffolding; not for end users)
-- [ ] Audit `CHANGELOG.md` for any internal-only notes; rewrite as a clean public changelog
 - [ ] Confirm no internal URLs, employee names, customer references, or staging credentials in any skill or doc
 - [ ] Bump `.claude-plugin/plugin.json` version to `1.0.0`
 - [ ] Update the version in `.claude-plugin/marketplace.json` to match
