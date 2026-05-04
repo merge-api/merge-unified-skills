@@ -142,10 +142,6 @@ Each tool gets:
 
 Run `./scripts/convert.sh --list` to see all supported tools.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new skill, the PR workflow, and the publish playbook.
-
 ## License
 
 [MIT](LICENSE).
