@@ -232,8 +232,8 @@ The `account-details` endpoint returns integration information at the **top leve
   "integration_slug": "officient",      // STRING (integration identifier)
   "category": "hris",
   "end_user_origin_id": "67f452a4-493c-414a-9f09-0873c003701e_hris",
-  "end_user_organization_name": "Merge",
-  "end_user_email_address": "ashwin.prakash@merge.dev",
+  "end_user_organization_name": "Acme Corp",
+  "end_user_email_address": "customer@example.com",
   "status": "COMPLETE",
   "webhook_listener_url": "https://api.merge.dev/api/integrations/webhook-listener/...",
   "is_duplicate": null,

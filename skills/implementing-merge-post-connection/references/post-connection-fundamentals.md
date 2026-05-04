@@ -10,7 +10,7 @@ Reference documentation for implementing the post-connection experience with Mer
 
 ### Overview
 
-Your customer just integrated their account into your product with [Merge Link](https://docs.merge.dev/guides/magic-link/), what happens next? This article explains the **initial sync** - how it works, what to expect, and how to monitor it, so you can design a smooth product and user experience.
+Your customer just integrated their account into your product with [Merge Link](https://docs.merge.dev/merge-unified/merge-link/magic-link), what happens next? This article explains the **initial sync** - how it works, what to expect, and how to monitor it, so you can design a smooth product and user experience.
 
 ### What happens right after a Linked Account is connected?
 
@@ -40,7 +40,7 @@ There are three ways to monitor initial sync progress:
 
 #### The /sync-status endpoint
 
-Sample response from [GET /sync-status](https://docs.merge.dev/hris/sync-status/#sync_status_list) during the initial sync:
+Sample response from [GET /sync-status](https://docs.merge.dev/merge-unified/hris/data-management/sync-status/list) during the initial sync:
 
 ```json
 {
@@ -73,7 +73,7 @@ Sample response from [GET /sync-status](https://docs.merge.dev/hris/sync-status/
 
 #### Linked account synced webhook
 
-The **Linked account synced** webhook can notify when the initial sync completes. You can configure this webhook on the [Webhooks](https://app.merge.dev/configuration/webhooks) management console in your Merge dashboard. [Learn more](https://docs.merge.dev/basics/webhooks/merge-webhooks/)
+The **Linked account synced** webhook can notify when the initial sync completes. You can configure this webhook on the [Webhooks](https://app.merge.dev/configuration/webhooks) management console in your Merge dashboard. [Learn more](https://docs.merge.dev/merge-unified/reading-data/webhooks/merge-webhooks)
 
 What it does:
 
@@ -95,8 +95,8 @@ Sample **Linked account synced** webhook payload for a ticketing category linked
     "integration_slug": "azure-devops",
     "category": "ticketing",
     "end_user_origin_id": "TEST_AUM6QPMP",
-    "end_user_organization_name": "MERGE Test User AUM6QPMP",
-    "end_user_email_address": "test@merge.dev",
+    "end_user_organization_name": "Acme Corp",
+    "end_user_email_address": "customer@example.com",
     "status": "COMPLETE",
     "webhook_listener_url": "https://api.merge.dev/api/integrations/webhook-listener/7hT4V5bFJBeu1fYD5Hy79rT_VCL6qBF7r1mJHGm5BRrNiJlwOEs6dg",
     "is_duplicate": null,
@@ -165,7 +165,7 @@ Sample **Common model synced** webhook payload for Candidates common model in AT
     "category": "ats",
     "end_user_origin_id": "",
     "end_user_organization_name": "Test",
-    "end_user_email_address": "test@merge.dev",
+    "end_user_email_address": "customer@example.com",
     "status": "COMPLETE",
     "webhook_listener_url": "https://api.merge.dev/api/integrations/webhook-listener/IDS",
     "is_duplicate": null,
@@ -206,7 +206,7 @@ A tight integration between your product and the sync status is necessary to ens
 
 - Show a "Syncing your data" banner until initial sync complete
 - Gate features that require all/some common models to be synced
-- Surface high-level error with [GET /issues](https://docs.merge.dev/hris/issues/) endpoint or [issues webhook](https://help.merge.dev/articles/6906816-issues-webhooks) and provide "Retry" or "Contact support" guidance wherever necessary.
+- Surface high-level error with [GET /issues](https://docs.merge.dev/merge-unified/hris/linked-account/issues) endpoint or [issues webhook](https://help.merge.dev/articles/6906816-issues-webhooks) and provide "Retry" or "Contact support" guidance wherever necessary.
 
 ### Common issues and fixes
 
@@ -249,12 +249,12 @@ The feature rolls out per integration. Users are encouraged to report unsupporte
 
 > Source: https://help.merge.dev/articles/6290701373-handling-custom-fields
 
-Many third-party systems include custom fields and data points that fall outside of Merge's standard Common Models. To help you access, unify, and operationalize these fields, Merge offers several flexible mechanisms through its Supplemental Data features: [Remote Data](https://docs.merge.dev/supplemental-data/remote-data/) and [Field Mapping](https://docs.merge.dev/supplemental-data/field-mappings/overview/).
+Many third-party systems include custom fields and data points that fall outside of Merge's standard Common Models. To help you access, unify, and operationalize these fields, Merge offers several flexible mechanisms through its Supplemental Data features: [Remote Data](https://docs.merge.dev/merge-unified/supplemental-data/remote-data) and [Field Mapping](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/overview).
 
 This guide outlines suggestions when **implementing** custom fields. It briefly outlines the options you have to **populate** Field Mappings, but for more information, refer to official documentation:
 
-- [Mapping across an integration](https://docs.merge.dev/supplemental-data/field-mappings/across-an-integration/)
-- [Mapping for a Linked Account](https://docs.merge.dev/supplemental-data/field-mappings/for-linked-account/)
+- [Mapping across an integration](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-across-an-integration)
+- [Mapping for a Linked Account](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-for-a-linked-account)
 
 ### Understanding supplemental data
 
@@ -297,10 +297,10 @@ In this approach, your team predefines **Org-wide target fields**, making sure t
 
 **How it works:**
 
-- You define the [target field names](https://docs.merge.dev/supplemental-data/field-mappings/target-fields/) (e.g., `t_shirt_size` or `custom_field_01`) on your target Common Models.
-- The target fields are either mapped [across an integration](https://docs.merge.dev/supplemental-data/field-mappings/across-an-integration/) or [for a specific Linked Account](https://docs.merge.dev/supplemental-data/field-mappings/for-linked-account/).
+- You define the [target field names](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/target-fields) (e.g., `t_shirt_size` or `custom_field_01`) on your target Common Models.
+- The target fields are either mapped [across an integration](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-across-an-integration) or [for a specific Linked Account](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-for-a-linked-account).
 - Merge stores and applies the mappings.
-- You ingest these mappings' values in your normal syncs from Merge to you via the [field_mappings](https://docs.merge.dev/supplemental-data/field-mappings/access-mapped-data/) field.
+- You ingest these mappings' values in your normal syncs from Merge to you via the [field_mappings](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/access-mapped-data) field.
 
 #### Approach 2: Allow end-users to define their custom field names
 
@@ -330,13 +330,13 @@ For example, if your product has a field for an Employee's "Preferred Language".
 
 Your Support team, Implementation team, or Customer Success team can provide white glove support to your customers by populating Field Mappings within the Merge Dashboard. This will work with both **Approach 1** and **Approach 2** outlined above. See official documentation for the full process:
 
-- [Populating Field Mappings for a Linked Account](https://docs.merge.dev/supplemental-data/field-mappings/for-linked-account/)
+- [Populating Field Mappings for a Linked Account](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-for-a-linked-account)
 
 #### Per Linked Account, by your customer, in Merge Link
 
 Your customers can self-serve the population of Field Mappings directly in Merge Link. This will work with both **Approach 1** and **Approach 2** outlined above. See official documentation for the full process:
 
-- [Populating Field Mappings for a Linked Account](https://docs.merge.dev/supplemental-data/field-mappings/for-linked-account/)
+- [Populating Field Mappings for a Linked Account](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/mapping-for-a-linked-account)
 
 #### Per Linked Account, through a custom mapping UI in your product
 
@@ -351,16 +351,16 @@ This approach gives customers end-to-end control over field mappings **inside yo
 
 **How it works:**
 
-- Fetch current Field Mappings with [POST /field-mapping](https://docs.merge.dev/hris/field-mapping/#field_mappings_create).
-- Display fields available for Field Mapping with [/remote-fields](https://docs.merge.dev/hris/field-mapping/#remote_fields_retrieve).
+- Fetch current Field Mappings with [POST /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-create).
+- Display fields available for Field Mapping with [/remote-fields](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/remote-fields-retrieve).
 - Your UI collects user mapping selections.
-- You create these mappings with [POST /field-mapping](https://docs.merge.dev/hris/field-mapping/#field_mappings_create) or update them with [PATCH /field-mapping](https://docs.merge.dev/hris/field-mapping/#field_mappings_partial_update).
+- You create these mappings with [POST /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-create) or update them with [PATCH /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-partial-update).
 - Merge applies and stores the mapping(s).
-- You ingest these mappings' values in your normal syncs from Merge to you via the [field_mappings](https://docs.merge.dev/supplemental-data/field-mappings/access-mapped-data/) field.
+- You ingest these mappings' values in your normal syncs from Merge to you via the [field_mappings](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/access-mapped-data) field.
 
 ### Incorporating Field Mappings in your syncing logic
 
-After Field Mappings are created, they appear as additional properties on the corresponding Merge Common Model. Organization-wide targets are separated from Linked Account-specific targets so you can easily distinguish between the two. An example is provided below, but check out [official Field Mapping documentation](https://docs.merge.dev/supplemental-data/field-mappings/access-mapped-data/) for more detail.
+After Field Mappings are created, they appear as additional properties on the corresponding Merge Common Model. Organization-wide targets are separated from Linked Account-specific targets so you can easily distinguish between the two. An example is provided below, but check out [official Field Mapping documentation](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/access-mapped-data) for more detail.
 
 ```json
 {
