@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.5.0
+  version: 0.6.0
 ---
 
 # Merge Integration Assistant
@@ -189,33 +189,47 @@ To test API calls without going through Merge Link at all, create a **Test Linke
 
 ### React
 
+The hook returns `{ open, isReady }` and accepts a `linkToken`. Set `linkToken` in state on click, then let a `useEffect` call `open()` once `isReady` is true — calling `open()` directly in the click handler races the hook's initialization. Reset `linkToken` to `null` after `onSuccess` and `onExit` so the next click fetches a fresh token (a spent token won't re-open).
+
 ```tsx
+import { useState, useEffect } from "react";
 import { useMergeLink } from "@mergeapi/react-merge-link";
 
-function ConnectButton({ linkToken }: { linkToken: string | null }) {
-  // Gate hook initialization on a non-null token. `useMergeLink` accepts an
-  // empty string but errors silently — render a loading state until the
-  // token actually arrives, then mount the inner component.
-  if (!linkToken) return <button disabled>Loading…</button>;
-  return <ConnectButtonInner linkToken={linkToken} />;
-}
+function ConnectButton({ category }: { category: string }) {
+  const [linkToken, setLinkToken] = useState<string | null>(null);
 
-function ConnectButtonInner({ linkToken }: { linkToken: string }) {
   const { open, isReady } = useMergeLink({
     linkToken,
+    shouldSendTokenOnSuccessfulLink: true,
     onSuccess: async (publicToken) => {
       await fetch("/api/merge/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicToken, endUserOriginId: "your_user_id" }),
       });
+      setLinkToken(null); // reset so next click fetches a fresh token
     },
-    onExit: () => console.log("User closed Merge Link"),
+    onExit: () => setLinkToken(null),
   });
-  // isReady = true when SDK loaded + initialized. Gate the button on it.
+
+  // Open once the hook is ready after the token is set
+  useEffect(() => {
+    if (isReady && linkToken) open();
+  }, [isReady, linkToken, open]);
+
+  const handleConnect = async () => {
+    const res = await fetch("/api/merge/create-link-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category }),
+    });
+    const { link_token } = await res.json();
+    setLinkToken(link_token);
+  };
+
   // Replace the label with your category — "Connect your CRM" / "Connect your HRIS" /
   // "Connect your ticketing system" / etc. — or use the integration name if known.
-  return <button onClick={open} disabled={!isReady}>Connect your provider</button>;
+  return <button onClick={handleConnect}>Connect your provider</button>;
 }
 ```
 
