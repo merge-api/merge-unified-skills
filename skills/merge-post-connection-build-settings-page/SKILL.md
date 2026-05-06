@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Building the Integration Settings Page
@@ -24,9 +24,33 @@ A dedicated settings page prevents "silent failure" — credentials expire, perm
 
 ## Prerequisites
 
-- The `implementing-merge-post-connection` orchestrator has loaded context (Step 1)
 - All four backend endpoints from `merge-link-implement-backend` working — these are routes on **your** server (e.g., `/api/merge/create-link-token`), not Merge API endpoints
 - A backend able to add either a new `integration_settings` table or a `jsonb`/JSON column on `linked_accounts`
+
+## Before Proceeding
+
+Three pieces of information are needed before generating any code.
+
+If invoked from `implementing-merge-post-connection`, these were answered in Step 1 — use that context. Otherwise, gather them now:
+
+**Step 1 — Confirm or gather required context:**
+
+- **Categories**: Which Merge categories does the settings page need to display? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`)
+- **Frontend framework**: React, Vue, Svelte, or vanilla? Drives the component pattern below.
+- **`linked_accounts` schema**: which columns are already present (`status`, `error_category`, `initial_sync_complete`)?
+
+**Step 2 — Frontend pre-scan:**
+
+Search the frontend for an existing settings, account, admin, integrations, or preferences page (filenames or routes). If found, identify the exact file and where an "Integrations" section would be inserted.
+
+- If an existing page is found: confirm with the user — "I found `{file}` as your existing settings/account page. I'll insert an Integrations section there. Is that correct?"
+- If no existing page is found: ask — "I didn't find an existing settings or account page. Do you have design mockups? If not, I can generate a new page matching the visual style of your existing pages."
+
+**Step 3 — Confirm approach before writing any UI code:**
+
+- If an existing page was found: modify that file rather than creating a new one.
+- If mockups were provided: implement to spec, matching the app's component library.
+- If no page and no mockups: generate a new page matching the visual style of existing pages. Do not introduce new dependencies without asking.
 
 ## Page structure: four components
 

@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Implementing Merge Sync via Polling (Fallback / Development Starting Point)
@@ -28,14 +28,23 @@ A single scheduled background job polls every active linked account, detecting b
 
 ## First activation: self-introduce
 
-> I'm the merge-sync-implement-polling skill (v0.1.0). I'll wire up a single scheduled job that detects both initial and subsequent Merge syncs by calling `GET /sync-status`. This is great for local dev and as a production fallback alongside webhooks.
+> I'm the merge-sync-implement-polling skill. I'll wire up a single scheduled job that detects both initial and subsequent Merge syncs by calling `GET /sync-status`. This is great for local dev and as a production fallback alongside webhooks.
 
 ## Prerequisites
 
-- Sync context loaded (the `implementing-merge-sync` orchestrator runs this in Step 1)
-- `linked_accounts` table has `initial_sync_complete boolean DEFAULT false`
 - Merge API key available as env var (e.g., `MERGE_API_KEY`)
 - Background job system available (cron, Celery, Redis Queue, BullMQ, etc.)
+
+## Before Proceeding
+
+Four pieces of information are needed before generating any code.
+
+If invoked from `implementing-merge-sync`, these were answered in Step 1 — use that context. Otherwise, gather them now:
+
+- **Common models to sync**: which Merge common models? (e.g. `Employee`, `Contact`, `Ticket`) — drives the per-model fetch loop in Step 5.
+- **`linked_accounts.initial_sync_complete` column**: present or missing? Required for the per-account branching in Step 2. If missing, the migration in Step 1 below adds it.
+- **Background job system**: cron, Celery, Redis Queue, BullMQ, Sidekiq, or other? Drives the scheduling syntax. If `not found`, ask the user whether to scaffold cron or pick a queue.
+- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client`, `MergePythonSDK`, etc.) Drives whether examples below use the SDK or raw HTTP.
 
 ## Step 1: Database additions
 

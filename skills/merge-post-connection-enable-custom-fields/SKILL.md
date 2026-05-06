@@ -4,7 +4,7 @@ description: Build a settings UI that lets customers select and enable custom fi
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Enable Custom Fields
@@ -13,7 +13,19 @@ Different customers have different custom fields in their HR/ATS/CRM systems —
 
 ## Prerequisites
 
-Context loaded via Step 1 of `implementing-merge-post-connection` (custom fields fundamentals loaded).
+Custom fields fundamentals loaded (`../implementing-merge-post-connection/references/post-connection-fundamentals.md`).
+
+## Before Proceeding
+
+Three pieces of information are needed before generating any code.
+
+If invoked from `implementing-merge-post-connection`, the first two were answered in Step 1 — use that context. Otherwise, gather them now:
+
+- **Categories**: Which Merge categories need custom fields? (`hris`, `ats`, `crm`, `accounting`, `ticketing`)
+- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, etc. Drives whether examples below use the SDK or raw HTTP.
+- **Existing field-mapping or settings UI?** If a settings page already exists (see `merge-post-connection-build-settings-page`), the field selector inserts there rather than creating a new page.
+
+Then choose the approach (Approach A vs B below) before writing any code — see "Choose Your Approach" immediately after.
 
 ## Choose Your Approach
 
