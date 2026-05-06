@@ -28,14 +28,20 @@ If invoked from `implementing-merge-link`, these were answered in Step 1d — us
 
 ### SDK Installation
 
-**If using the Merge SDK (recommended):**
+**If using the Merge SDK (recommended):** Merge ships official SDKs for six backend languages — pick the one matching your stack.
 
-- Python: `pip install MergePythonSDK` → `from merge.client import Merge`
-- Node/TypeScript: `npm install @mergeapi/merge-node-client` → `import Merge from '@mergeapi/merge-node-client'`
+| Language | Install | Import |
+|---|---|---|
+| Python | `pip install MergePythonClient` | `from merge import Merge` |
+| Node / TypeScript | `npm install @mergeapi/merge-node-client` | `import { MergeClient } from "@mergeapi/merge-node-client"` |
+| Java / Kotlin | Maven `dev.merge:merge-java-client` (Gradle: `implementation "dev.merge:merge-java-client:<version>"`) | `import com.merge.api.MergeApiClient;` |
+| Go | `go get github.com/merge-api/merge-go-client/v2` | `import mergeclient "github.com/merge-api/merge-go-client/v2/client"` |
+| Ruby | `gem install merge_ruby_client` (or `gem "merge_ruby_client"` in Gemfile) | `require "merge_ruby_client"` |
+| C# / .NET | `dotnet add package Merge.Client` | `using Merge.Client;` |
 
-Check if the SDK is already installed before adding it. Do not add a dependency that's already present.
+Check if the SDK is already installed before adding it. Do not add a dependency that's already present. For per-language initialize / list / paginate samples, see `../merge-onboarding/references/sdk-quickstarts.md`.
 
-**If using raw HTTP:** use `requests` (Python), `axios`/`fetch` (Node) — patterns shown below work for both.
+**If using raw HTTP:** use whatever HTTP client your stack already has — `requests` / `httpx` (Python), `axios` / `fetch` (Node), `net/http` (Go), `Net::HTTP` / `Faraday` (Ruby), `HttpClient` (.NET), `OkHttp` (JVM). The endpoint patterns shown below work for any.
 
 ## Implementation
 
@@ -48,7 +54,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 1. Read `category` (validated against `["hris", "ats", "crm", "accounting", "ticketing", "filestorage", "knowledgebase"]`) and optional `integration` from request body. Reject unknown category values.
 2. Determine `end_user_origin_id` based on the strategy chosen in Step 1:
    - **Strategy 1 (1 account per category)**: Use a stable per-org identifier — e.g. a GUID column already on your org/tenant table, or the org's primary key formatted as a string. This value must be the same every time the same org connects. Merge uses `end_user_origin_id + category` for uniqueness, so the same stable ID will produce one Linked Account per category per org.
-   - **Strategy 2 (multiple accounts per category)**: Check for an existing `pending` record for this org+category first. If one exists (incomplete prior attempt), reuse its `end_user_origin_id`. If none exists, generate a new GUID. Do NOT generate a new GUID on every click — that creates duplicate Linked Accounts on every open-and-abandon. Full deduplication logic: see `references/backend-implementation.md` under "Handling Incomplete Linking Attempts."
+   - **Strategy 2 (multiple accounts per category)**: Check for an existing `pending` record for this org+category first. If one exists (incomplete prior attempt), reuse its `end_user_origin_id`. If none exists, generate a new GUID. Do NOT generate a new GUID on every click — that creates duplicate Linked Accounts on every open-and-abandon. Full deduplication logic: see `../implementing-merge-link/references/backend-implementation.md` under "Handling Incomplete Linking Attempts."
 3. **Create the `linked_accounts` record NOW** with `status = "pending"` — do this BEFORE calling the Merge API (prevents duplicate accounts if the modal is opened multiple times)
 4. If a pending record already exists for this `end_user_origin_id`, reuse it. **Dedup pattern:** `INSERT ... ON CONFLICT (end_user_origin_id) WHERE status = 'pending' DO NOTHING`, or delete the prior pending row before inserting.
 5. Call `POST https://api.merge.dev/api/{category}/v1/link-token` with `Authorization: Bearer {MERGE_API_KEY}`, passing `end_user_origin_id`, `end_user_email_address`, `end_user_organization_name`, `categories`, and optional `integration`

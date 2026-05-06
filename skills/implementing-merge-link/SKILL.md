@@ -50,7 +50,7 @@ Then identify:
 - **Tech stack** language, framework, ORM
 - **Existing database schema** (migrations, models, or schema files)
 - **Any existing Merge-related code** (search for `merge`, `MERGE_API_KEY`, `account_token`)
-- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, or similar in package.json, requirements.txt, Gemfile, go.mod, etc. Record yes/no.
+- **Backend Merge SDK installed?** Search the project's manifest for the language-appropriate package: `@mergeapi/merge-node-client` (package.json), `MergePythonClient` (requirements.txt / pyproject.toml), `dev.merge:merge-java-client` (pom.xml / build.gradle), `merge-go-client` (go.mod), `merge_ruby_client` (Gemfile), `Merge.Client` (.csproj). Record yes/no and which language.
 - **React Merge Link SDK installed?** If the frontend is React, also search for `@mergeapi/react-merge-link` in package.json. Record yes/no (or N/A if not React).
 - **Merge categories in use?** Look for table names (`employees`, `candidates`, `contacts`, `deals`), route names, model names, or README/CLAUDE.md references to HR, recruiting, CRM, ticketing, etc. Record what you find or `unknown`.
 - **Organization/tenant table?** Find the table or model representing the user's customer organization or tenant — look for names like `organizations`, `companies`, `tenants`, `accounts`, `workspaces`. Record the table name and its primary key column, or `not found`.

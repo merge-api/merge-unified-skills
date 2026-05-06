@@ -50,7 +50,7 @@ If invoked from `implementing-merge-link`, the pre-scan was already done in Step
 
 Add a new backend endpoint that proxies the catalog to your frontend:
 
-```
+```text
 GET /api/merge/integrations
 → calls GET https://api.merge.dev/api/organizations/integrations
   with Authorization: Bearer {MERGE_API_KEY}
