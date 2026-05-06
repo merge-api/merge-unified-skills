@@ -73,8 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Refresh page to show new integration
-                window.location.reload();
+                // Update UI to reflect connected state — show integration_name,
+                // swap Connect button for a connected/manage indicator.
+                // Use the app's existing state management (DOM mutation, framework state, etc.).
+                // Do NOT call window.location.reload().
             }
         });
     }
@@ -192,7 +194,8 @@ function deleteIntegration(integrationId, integrationName) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                // Update UI to reflect disconnected state — restore Connect button,
+                // remove connected indicator. Do NOT call window.location.reload().
             }
         });
     }
@@ -215,7 +218,7 @@ function deleteIntegration(integrationId, integrationName) {
 ### State Management
 - **Track initialization state** to prevent conflicts
 - **Clean button states** on all completion scenarios
-- **Handle page refresh** to show updated integrations
+- **Update UI state directly** after success — do not reload the page; derive connected state from the exchange response
 
 ## Testing Checklist
 
@@ -337,8 +340,8 @@ function onSuccess(public_token) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Refresh to show connected integration
-            window.location.reload();
+            // Update the card's state immediately — set it to connected, show integration name.
+            // Do NOT call window.location.reload().
         }
     });
 }
@@ -431,3 +434,141 @@ Each integration includes:
 **Backend Changes**: Minimal (accept `integration` parameter)
 **Frontend Changes**: Significant (marketplace UI, state management, category organization)
 **Merge Integration**: Identical patterns, just parameter variation
+
+---
+
+## React SDK Implementation (`@mergeapi/react-merge-link`)
+
+For React applications, use the official React SDK instead of the CDN+vanilla JS approach.
+
+### Installation
+
+```bash
+npm install @mergeapi/react-merge-link
+```
+
+### Core Pattern
+
+`useMergeLink({ linkToken, onSuccess, onExit, ... })` returns `{ open, isReady }`.
+
+- Fetch a link token on button click and set it in state
+- A `useEffect` watching `isReady && linkToken` calls `open()` — do not call `open()` directly in the click handler; the hook needs a render cycle to initialize first
+- Reset `linkToken` to `null` after `onSuccess` and `onExit` — required so the next click fetches a fresh token
+
+### Connect Button
+
+```jsx
+import { useState, useEffect } from 'react';
+import { useMergeLink } from '@mergeapi/react-merge-link';
+
+function ConnectButton({ category, onConnected }) {
+  const [linkToken, setLinkToken] = useState(null);
+
+  const { open, isReady } = useMergeLink({
+    linkToken,
+    shouldSendTokenOnSuccessfulLink: true,
+    onSuccess: async (publicToken) => {
+      const res = await fetch('/api/merge/exchange-public-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_token: publicToken }),
+      });
+      const { success, integration_name, integration_slug } = await res.json();
+      if (success) onConnected({ integration_name, integration_slug });
+      setLinkToken(null); // reset for next click
+    },
+    onExit: () => setLinkToken(null),
+  });
+
+  useEffect(() => {
+    if (isReady && linkToken) open();
+  }, [isReady, linkToken, open]);
+
+  const handleConnect = async () => {
+    const res = await fetch('/api/merge/create-link-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category }),
+    });
+    const { link_token } = await res.json();
+    setLinkToken(link_token);
+  };
+
+  return <button onClick={handleConnect}>Connect</button>;
+}
+```
+
+### Integration Marketplace
+
+Each card is its own component owning a `useMergeLink` instance. This isolates hook state per card — two simultaneous card clicks cannot race.
+
+```jsx
+import { useState, useEffect } from 'react';
+import { useMergeLink } from '@mergeapi/react-merge-link';
+
+function IntegrationCard({ integration, onConnected }) {
+  const [linkToken, setLinkToken] = useState(null);
+
+  const { open, isReady } = useMergeLink({
+    linkToken,
+    shouldSendTokenOnSuccessfulLink: true,
+    onSuccess: async (publicToken) => {
+      const res = await fetch('/api/merge/exchange-public-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_token: publicToken }),
+      });
+      const { success, integration_name } = await res.json();
+      if (success) onConnected(integration.slug, integration_name);
+      setLinkToken(null);
+    },
+    onExit: () => setLinkToken(null),
+  });
+
+  useEffect(() => {
+    if (isReady && linkToken) open();
+  }, [isReady, linkToken, open]);
+
+  const handleConnect = async () => {
+    const res = await fetch('/api/merge/create-link-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: integration.category, integration: integration.slug }),
+    });
+    const { link_token } = await res.json();
+    setLinkToken(link_token);
+  };
+
+  return <button onClick={handleConnect}>Connect</button>;
+}
+
+// Parent manages connection state, passes onConnected down to each card
+function IntegrationMarketplace({ integrations }) {
+  const [connectionStatus, setConnectionStatus] = useState({});
+
+  const handleConnected = (slug, integrationName) => {
+    setConnectionStatus(prev => ({
+      ...prev,
+      [slug]: { connected: true, integrationName },
+    }));
+  };
+
+  return (
+    <div>
+      {integrations.map(integration => (
+        <IntegrationCard
+          key={integration.slug}
+          integration={integration}
+          onConnected={handleConnected}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+### Key Gotchas
+
+- **Reset `linkToken` to `null`** after `onSuccess` and `onExit` — required so the next click fetches a fresh token rather than re-opening with the spent one
+- **Include `open` in the `useEffect` dependency array** — the hook returns a stable reference but omitting it will trigger ESLint warnings
+- **Do not call `open()` in the click handler** — set `linkToken` in state, then let the `useEffect` call `open()` once `isReady` is true
