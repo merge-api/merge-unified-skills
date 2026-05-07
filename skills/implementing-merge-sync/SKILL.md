@@ -58,7 +58,7 @@ Then identify:
 - **Background job system**: Celery, Redis Queue, BullMQ, Sidekiq, cron, or other. Record what you find or `not found`.
 - **Existing sync logic**: search for `sync`, `modified_after`, `last_synced_at`.
 - **Body-parsing middleware**: search for `express.json()`, `bodyParser.json()`, framework JSON middleware. Webhook signature verification needs raw bytes.
-- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, etc. Record yes/no.
+- **Backend Merge SDK installed?** Search the project's manifest for the language-appropriate package: `@mergeapi/merge-node-client` (package.json), `MergePythonClient` (requirements.txt / pyproject.toml), `dev.merge:merge-java-client` (pom.xml / build.gradle), `merge-go-client` (go.mod), `merge_ruby_client` (Gemfile), `Merge.Client` (.csproj). Record yes/no and which language.
 
 **1c. Confirm readiness** with a brief summary:
 

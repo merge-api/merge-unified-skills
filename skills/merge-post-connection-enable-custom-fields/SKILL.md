@@ -22,7 +22,7 @@ Three pieces of information are needed before generating any code.
 If invoked from `implementing-merge-post-connection`, the first two were answered in Step 1 — use that context. Otherwise, gather them now:
 
 - **Categories**: Which Merge categories need custom fields? (`hris`, `ats`, `crm`, `accounting`, `ticketing`)
-- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, etc. Drives whether examples below use the SDK or raw HTTP.
+- **Backend Merge SDK installed?** Search for the language-appropriate package: `@mergeapi/merge-node-client`, `MergePythonClient`, `dev.merge:merge-java-client`, `merge-go-client`, `merge_ruby_client`, or `Merge.Client`. Drives whether examples below use the SDK or raw HTTP.
 - **Existing field-mapping or settings UI?** If a settings page already exists (see `merge-post-connection-build-settings-page`), the field selector inserts there rather than creating a new page.
 
 Then choose the approach (Approach A vs B below) before writing any code — see "Choose Your Approach" immediately after.

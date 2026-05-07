@@ -48,7 +48,7 @@ Then identify:
 - **Error-handling patterns**: existing user-facing error messages or banner components.
 - **Existing relinking or re-authentication flows**.
 - **`linked_accounts` schema**: columns currently present, particularly `status`, `error_category`, `initial_sync_complete`.
-- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, or similar in package.json, requirements.txt, Gemfile, go.mod, etc. Record yes/no.
+- **Backend Merge SDK installed?** Search the project's manifest for the language-appropriate package: `@mergeapi/merge-node-client` (package.json), `MergePythonClient` (requirements.txt / pyproject.toml), `dev.merge:merge-java-client` (pom.xml / build.gradle), `merge-go-client` (go.mod), `merge_ruby_client` (Gemfile), `Merge.Client` (.csproj). Record yes/no and which language.
 - **React Merge Link SDK installed?** If the frontend is React, also search for `@mergeapi/react-merge-link`. Record yes/no (or N/A).
 
 **1c. Confirm readiness** with a brief summary:

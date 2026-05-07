@@ -44,7 +44,7 @@ If invoked from `implementing-merge-sync`, these were answered in Step 1 — use
 - **Common models to sync**: which Merge common models? (e.g. `Employee`, `Contact`, `Ticket`) — drives the per-model fetch loop in Step 5.
 - **`linked_accounts.initial_sync_complete` column**: present or missing? Required for the per-account branching in Step 2. If missing, the migration in Step 1 below adds it.
 - **Background job system**: cron, Celery, Redis Queue, BullMQ, Sidekiq, or other? Drives the scheduling syntax. If `not found`, ask the user whether to scaffold cron or pick a queue.
-- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client`, `MergePythonSDK`, etc.) Drives whether examples below use the SDK or raw HTTP.
+- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client` for Node, `MergePythonClient` for Python, `dev.merge:merge-java-client` for JVM, `merge-go-client` for Go, `merge_ruby_client` for Ruby, `Merge.Client` for .NET.) Drives whether examples below use the SDK or raw HTTP.
 
 ## Step 1: Database additions
 
