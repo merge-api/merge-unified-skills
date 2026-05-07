@@ -44,7 +44,7 @@ If invoked from `implementing-merge-sync`, these were answered in Step 1 — use
 - **Background job system**: Celery, Redis Queue, BullMQ, Sidekiq, etc.? Required because the endpoint must return 200 in under 5 seconds — all data fetching runs async. If `not found`, ask the user before continuing.
 - **Body-parsing middleware**: search for `express.json()`, `bodyParser.json()`, framework-default JSON parsing. HMAC verification needs raw bytes — if global JSON middleware is enabled, the webhook route must opt out (e.g. `express.raw({ type: '*/*' })`).
 - **Public webhook URL**: production URL, staging URL, or local tunnel (ngrok / cloudflared)? Confirm one is available before continuing — without a reachable URL, polling is the only option (see `merge-sync-implement-polling`).
-- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client`, `MergePythonSDK`, etc.) Drives whether examples below use the SDK or raw HTTP.
+- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client` for Node, `MergePythonClient` for Python, `dev.merge:merge-java-client` for JVM, `merge-go-client` for Go, `merge_ruby_client` for Ruby, `Merge.Client` for .NET.) Drives whether examples below use the SDK or raw HTTP.
 
 ## Step 1: Register the webhook in Merge Dashboard
 

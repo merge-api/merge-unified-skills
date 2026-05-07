@@ -15,7 +15,33 @@ Implements the server-side API that powers the Merge Link flow. These endpoints 
 
 - `merge-link-setup-database` complete (`linked_accounts` table exists with `end_user_origin_id`, `account_token`, `integration_slug`, `category`, `status` columns)
 - `MERGE_API_KEY` environment variable set
-- HTTP client installed (e.g., `requests` for Python, `axios` for Node)
+
+## Before Proceeding
+
+Before writing any code, confirm or gather the following:
+
+- **Categories**: Which Merge categories are being implemented? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`) — used to scope endpoints.
+- **Linked Account strategy**: 1 Linked Account per category per org (Strategy 1), or multiple per category (Strategy 2)? — drives `end_user_origin_id` generation in Endpoint 1.
+- **SDK vs raw HTTP**: Official Merge SDK (recommended) or raw HTTP calls?
+
+If invoked from `implementing-merge-link`, these were answered in Step 1d — use that context. Otherwise, ask the user now before proceeding.
+
+### SDK Installation
+
+**If using the Merge SDK (recommended):** Merge ships official SDKs for six backend languages — pick the one matching your stack.
+
+| Language | Install | Import |
+|---|---|---|
+| Python | `pip install MergePythonClient` | `from merge import Merge` |
+| Node / TypeScript | `npm install @mergeapi/merge-node-client` | `import { MergeClient } from "@mergeapi/merge-node-client"` |
+| Java / Kotlin | Maven `dev.merge:merge-java-client` (Gradle: `implementation "dev.merge:merge-java-client:<version>"`) | `import com.merge.api.MergeApiClient;` |
+| Go | `go get github.com/merge-api/merge-go-client/v2` | `import mergeclient "github.com/merge-api/merge-go-client/v2/client"` |
+| Ruby | `gem install merge_ruby_client` (or `gem "merge_ruby_client"` in Gemfile) | `require "merge_ruby_client"` |
+| C# / .NET | `dotnet add package Merge.Client` | `using Merge.Client;` |
+
+Check if the SDK is already installed before adding it. Do not add a dependency that's already present. For per-language initialize / list / paginate samples, see `../merge-onboarding/references/sdk-quickstarts.md`.
+
+**If using raw HTTP:** use whatever HTTP client your stack already has — `requests` / `httpx` (Python), `axios` / `fetch` (Node), `net/http` (Go), `Net::HTTP` / `Faraday` (Ruby), `HttpClient` (.NET), `OkHttp` (JVM). The endpoint patterns shown below work for any.
 
 ## Implementation
 
@@ -25,12 +51,12 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 ### Endpoint 1: POST /api/merge/create-link-token
 
-1. Read `category` and optional `integration` from request body
-2. Generate `end_user_origin_id` deterministically — never random or counter-suffixed. Pick a format up-front and never change it:
-   - **One integration per category per customer** (most common): `{org_id}_{category}` (e.g. `acme_ticketing`)
-   - **Multiple integrations per category per customer** (e.g. ops uses Jira, eng uses GitLab under the same Acme account): `{org_id}_{category}_{integration_slug}` (e.g. `acme_ticketing_jira`, `acme_ticketing_gitlab`). The integration_slug must be picked **before** opening Merge Link so the origin_id is stable across reconnects — see the Marketplace pattern in `merge-link-implement-frontend-marketplace`. Do NOT compute disambiguators on the fly with counters or timestamps; you'll create duplicate Linked Accounts on every reconnect.
+1. Read `category` (validated against `["hris", "ats", "crm", "accounting", "ticketing", "filestorage", "knowledgebase"]`) and optional `integration` from request body. Reject unknown category values.
+2. Determine `end_user_origin_id` based on the strategy chosen in Step 1:
+   - **Strategy 1 (1 account per category)**: Use a stable per-org identifier — e.g. a GUID column already on your org/tenant table, or the org's primary key formatted as a string. This value must be the same every time the same org connects. Merge uses `end_user_origin_id + category` for uniqueness, so the same stable ID will produce one Linked Account per category per org.
+   - **Strategy 2 (multiple accounts per category)**: Check for an existing `pending` record for this org+category first. If one exists (incomplete prior attempt), reuse its `end_user_origin_id`. If none exists, generate a new GUID. Do NOT generate a new GUID on every click — that creates duplicate Linked Accounts on every open-and-abandon. Full deduplication logic: see `../implementing-merge-link/references/backend-implementation.md` under "Handling Incomplete Linking Attempts."
 3. **Create the `linked_accounts` record NOW** with `status = "pending"` — do this BEFORE calling the Merge API (prevents duplicate accounts if the modal is opened multiple times)
-4. If a pending record already exists for this `end_user_origin_id`, reuse it instead of creating a duplicate. **Dedup pattern:** use `INSERT ... ON CONFLICT (end_user_origin_id) WHERE status = 'pending' DO NOTHING`, or delete the prior pending row before inserting. Without this, a user who opens Link, abandons, and opens again creates two pending rows — and the exchange handler may match the wrong one
+4. If a pending record already exists for this `end_user_origin_id`, reuse it. **Dedup pattern:** `INSERT ... ON CONFLICT (end_user_origin_id) WHERE status = 'pending' DO NOTHING`, or delete the prior pending row before inserting.
 5. Call `POST https://api.merge.dev/api/{category}/v1/link-token` with `Authorization: Bearer {MERGE_API_KEY}`, passing `end_user_origin_id`, `end_user_email_address`, `end_user_organization_name`, `categories`, and optional `integration`
 6. Return `{ link_token }` to the frontend
 
