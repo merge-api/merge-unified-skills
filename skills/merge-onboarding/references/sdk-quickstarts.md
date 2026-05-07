@@ -174,38 +174,52 @@ npm install @mergeapi/react-merge-link
 
 ### Use the hook
 
+The hook accepts a `linkToken` and returns `{ open, isReady }`. Fetch the token on click, store it in state, and let a `useEffect` watching `isReady && linkToken` call `open()` — the hook needs a render cycle to initialize, so calling `open()` directly inside the click handler races the SDK. Reset `linkToken` to `null` after `onSuccess` and `onExit` so the next click fetches a fresh token (a spent token won't re-open the modal).
+
 ```tsx
+import { useState, useEffect } from "react";
 import { useMergeLink } from "@mergeapi/react-merge-link";
 
 interface Props {
-  linkToken: string;
+  category: string;
 }
 
-export function ConnectMergeButton({ linkToken }: Props) {
+export function ConnectMergeButton({ category }: Props) {
+  const [linkToken, setLinkToken] = useState<string | null>(null);
+
   const { open, isReady } = useMergeLink({
     linkToken,
+    shouldSendTokenOnSuccessfulLink: true,
     onSuccess: async (publicToken) => {
-      // Send publicToken to your backend immediately
       const res = await fetch("/api/merge/exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicToken }),
       });
       if (!res.ok) throw new Error("Token exchange failed");
+      setLinkToken(null); // reset so next click fetches a fresh token
     },
-    onExit: () => {
-      console.log("User closed Merge Link");
-    },
+    onExit: () => setLinkToken(null),
     onValidationError: (error) => {
       console.error("Merge Link validation error:", error);
     },
   });
 
-  return (
-    <button onClick={open} disabled={!isReady}>
-      Connect your account
-    </button>
-  );
+  useEffect(() => {
+    if (isReady && linkToken) open();
+  }, [isReady, linkToken, open]);
+
+  const handleConnect = async () => {
+    const res = await fetch("/api/merge/create-link-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category }),
+    });
+    const { link_token } = await res.json();
+    setLinkToken(link_token);
+  };
+
+  return <button onClick={handleConnect}>Connect your account</button>;
 }
 ```
 

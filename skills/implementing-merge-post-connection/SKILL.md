@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Merge Post-Connection Implementation
@@ -17,7 +17,7 @@ The post-connection experience covers everything customers interact with after a
 
 ## First activation: self-introduce
 
-> I'm the implementing-merge-post-connection skill (v0.2.0). I'll guide you through the integration management experience users see after connecting. Which part do you need first — a settings page, sync status display, or relinking support?
+> I'm the implementing-merge-post-connection skill. I'll guide you through the integration management experience users see after connecting. Which part do you need first — a settings page, sync status display, or relinking support?
 
 ## Prerequisites
 
@@ -41,23 +41,53 @@ Do **not** write any code in this step. Read the reference docs first, then scan
 
 > "I'll search your codebase for existing settings pages, error handling, and the `linked_accounts` schema. Ready to proceed?"
 
-Then search for:
+Then identify:
 
-- Existing settings or account management pages (routes, views, or components)
-- Error handling logic and user-facing error messages
-- Any existing relinking or re-authentication flows
-- The `linked_accounts` table schema (columns, indexes, relations)
+- **Tech stack**: language, framework, ORM, frontend library (React, Vue, Svelte, vanilla, etc.)
+- **Existing settings/account page**: routes, views, or files named `settings`, `account`, `admin`, `integrations`, `preferences`. Record the exact file path or `not found`.
+- **Error-handling patterns**: existing user-facing error messages or banner components.
+- **Existing relinking or re-authentication flows**.
+- **`linked_accounts` schema**: columns currently present, particularly `status`, `error_category`, `initial_sync_complete`.
+- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, or similar in package.json, requirements.txt, Gemfile, go.mod, etc. Record yes/no.
+- **React Merge Link SDK installed?** If the frontend is React, also search for `@mergeapi/react-merge-link`. Record yes/no (or N/A).
 
 **1c. Confirm readiness** with a brief summary:
 
-- Tech stack detected (language, framework, ORM, frontend library)
-- Any existing settings UI or error-handling patterns found
-- `linked_accounts` schema (relevant columns)
-- Confirmation that all three reference docs were loaded
+1. Tech stack identified (language, framework, ORM, frontend library)
+2. Reference docs loaded (list the three files read)
+3. Existing settings page: `{file}` or `not found`
+4. `linked_accounts` schema (relevant columns present / missing)
+5. Backend Merge SDK installed: yes / no
+6. React Merge Link SDK installed: yes / no / N/A
+
+**1d. Ask all unresolved questions in one message** before proceeding to Step 2:
+
+> Before I start building, I have a few quick questions:
+>
+> 1. **Which sub-skills do you want to run?** Pick any combination — I'll invoke them in order:
+>    - Settings page (Step 2 — recommended baseline)
+>    - Sync status visibility (Step 3)
+>    - Relinking + error messaging (Step 4)
+>    - Custom field selection (Step 5 — needs Merge Enterprise plan)
+>    - Data-scope filtering (Step 6 — required if customers control which records sync)
+>
+> 2. **Settings page surface** *(only if Step 2 is selected)*: [If found:] I found `{file}` as your existing settings/account page — I'll insert an "Integrations" section there. Is that correct? [If not found:] I didn't find an existing settings page. Do you have design mockups, or should I generate a new page matching the visual style of your existing pages?
+>
+> 3. **Backend SDK preference**: [If not installed:] Would you prefer the official Merge SDK (recommended — handles types and retries) or raw HTTP? [If already installed:] I see the Merge SDK is in your dependencies — I'll use it unless you prefer raw HTTP.
+>
+> 4. **Frontend SDK** *(React projects only)*: [If `@mergeapi/react-merge-link` not installed:] Would you prefer the React Merge Link SDK (`@mergeapi/react-merge-link`, recommended) or CDN+vanilla JS? [If already installed:] I see `@mergeapi/react-merge-link` in your dependencies — I'll use it unless you prefer the CDN approach. [If not React:] Skipped.
+
+Record the user's answers. Carry them as context into all sub-skills (Steps 2–6).
 
 ### Step 2: Build integration settings page → invoke `merge-post-connection-build-settings-page`
 
 Build the dedicated settings page that lets end users manage their connected integrations — reconnect, view health status, persist per-integration configuration, and adjust scope. (Absorbs the standalone configure flow: settings UI structure and the underlying persistence model are now treated as one artifact.)
+
+**Before invoking the sub-skill:** Use the existing-settings-page finding from Step 1d.
+
+- If an existing page was found: pass the file path so the sub-skill modifies it rather than creating a new one.
+- If mockups were provided: pass the mockups so the sub-skill implements to spec, matching the app's component library.
+- If no existing page and no mockups: the sub-skill will generate a new page matching the visual style of existing pages.
 
 ### Step 3: Surface sync status to users → invoke `merge-post-connection-surface-sync-status`
 

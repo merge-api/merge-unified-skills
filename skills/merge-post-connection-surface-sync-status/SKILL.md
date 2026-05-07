@@ -4,7 +4,7 @@ description: Implement sync status visibility and user-facing messaging for the 
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Surface Sync Status to End Users
@@ -14,6 +14,18 @@ After a user connects, Merge runs an initial sync that can take minutes to hours
 ## Prerequisites
 
 `merge-post-connection-build-settings-page` complete — a settings page must exist to render these banners.
+
+## Before Proceeding
+
+Three pieces of information are needed before generating any UI or backend code.
+
+If invoked from `implementing-merge-post-connection`, the first two were answered in Step 1 — use that context. Otherwise, gather them now:
+
+- **Categories**: Which Merge categories will surface sync status? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`) — needed for the per-category `/sync-status` calls.
+- **Frontend framework**: React, Vue, Svelte, or vanilla? Drives the banner component pattern.
+- **`linked_accounts.initial_sync_complete` column**: present or missing? Required for the in-progress vs. complete branching. If missing, add it via migration before continuing.
+
+Also briefly scan the frontend for an existing notification or banner system (look for `Banner`, `Notification`, `Alert`, `Toast` components) — if one exists, render the sync-status messages through it rather than introducing a new banner pattern.
 
 ## Implementation
 

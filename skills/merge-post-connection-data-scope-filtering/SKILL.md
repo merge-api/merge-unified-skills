@@ -13,7 +13,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Choosing a Data-Scope Filtering Strategy
@@ -24,8 +24,23 @@ Decide the filtering approach **before** a live customer forces the decision, be
 
 ## Prerequisites
 
-- The `implementing-merge-post-connection` orchestrator has loaded context (Step 1)
 - Initial sync logic working (`merge-sync-implement-webhooks` and/or `merge-sync-implement-polling`)
+
+## Before Proceeding
+
+Three pieces of information are needed before writing any filter logic.
+
+If invoked from `implementing-merge-post-connection`, the first two were answered in Step 1 — use that context. Otherwise, gather them now:
+
+- **Categories**: Which Merge categories need filtering? (`hris`, `ats`, `crm`, `accounting`, `ticketing`) — drives which filter parameters apply.
+- **Existing sync logic location**: Where is the sync code (webhook handler / polling job)? Filters apply inside it. Search for files that already call `/{category}/v1/{model}` or use `modified_after`.
+- **Filtering strategy preference**: pre-storage (Strategy 1) or post-storage (Strategy 2) — see the two-strategies section below. The recommendation is post-storage unless storage cost is a concern.
+
+Ask the user before continuing:
+
+> "Strategy 1 (pre-storage) keeps your DB smaller but requires a full re-sync if filter criteria change later. Strategy 2 (post-storage) is more flexible but stores all records. Which would you like — and which categories should I scope the filtering to?"
+
+Wait for the answer before proceeding.
 
 ## The two strategies
 
@@ -48,12 +63,6 @@ Store ALL records from Merge in a staging table (or with an `included` flag), an
 ## Recommendation
 
 Start with **post-storage filtering (Strategy 2)** unless storage cost is a meaningful concern. It's easier to tighten filters later than to backfill excluded records.
-
-**Before writing any code, confirm the strategy with the user:**
-
-> "Strategy 1 (pre-storage) keeps your DB smaller but requires a full re-sync if filter criteria change later. Strategy 2 (post-storage) is more flexible but stores all records. Which would you like to proceed with?"
-
-Wait for the answer before implementing.
 
 ## Filtering by category — Merge API parameters
 

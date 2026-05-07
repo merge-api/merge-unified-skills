@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Implementing Merge Sync via Webhooks (Primary)
@@ -25,15 +25,26 @@ Webhooks are the production-recommended way to detect Merge sync events. A singl
 
 ## First activation: self-introduce
 
-> I'm the merge-sync-implement-webhooks skill (v0.1.0). I'll wire up a single webhook endpoint that handles both initial and subsequent Merge syncs, with HMAC verification and async processing. For production, plan to also run `merge-sync-implement-polling` as a fallback.
+> I'm the merge-sync-implement-webhooks skill. I'll wire up a single webhook endpoint that handles both initial and subsequent Merge syncs, with HMAC verification and async processing. For production, plan to also run `merge-sync-implement-polling` as a fallback.
 
 ## Prerequisites
 
-- Sync context loaded (the `implementing-merge-sync` orchestrator runs this in Step 1)
 - `MERGE_WEBHOOK_SECRET` in `.env` (from Merge Dashboard → Webhooks)
-- `linked_accounts` table has `initial_sync_complete boolean DEFAULT false`
 - Background job queue configured (Celery, Redis Queue, BullMQ, etc.) for async processing
 - Webhook URL publicly accessible (use ngrok/cloudflared for local testing)
+
+## Before Proceeding
+
+Five pieces of information are needed before generating any code.
+
+If invoked from `implementing-merge-sync`, these were answered in Step 1 — use that context. Otherwise, gather them now:
+
+- **Common models to sync**: which Merge common models? (e.g. `Employee`, `Contact`, `Ticket`) — drives the per-model processing in Step 6.
+- **`linked_accounts.initial_sync_complete` column**: present or missing? Required for the initial-vs-subsequent branching in Step 4. Add via migration if missing.
+- **Background job system**: Celery, Redis Queue, BullMQ, Sidekiq, etc.? Required because the endpoint must return 200 in under 5 seconds — all data fetching runs async. If `not found`, ask the user before continuing.
+- **Body-parsing middleware**: search for `express.json()`, `bodyParser.json()`, framework-default JSON parsing. HMAC verification needs raw bytes — if global JSON middleware is enabled, the webhook route must opt out (e.g. `express.raw({ type: '*/*' })`).
+- **Public webhook URL**: production URL, staging URL, or local tunnel (ngrok / cloudflared)? Confirm one is available before continuing — without a reachable URL, polling is the only option (see `merge-sync-implement-polling`).
+- **Backend Merge SDK installed?** (`@mergeapi/merge-node-client`, `MergePythonSDK`, etc.) Drives whether examples below use the SDK or raw HTTP.
 
 ## Step 1: Register the webhook in Merge Dashboard
 

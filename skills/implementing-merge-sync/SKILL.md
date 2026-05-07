@@ -14,7 +14,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # Implementing Merge Sync
@@ -54,17 +54,37 @@ Read each file completely before proceeding.
 
 Then identify:
 
-- `linked_accounts` table structure (columns, indexes, existing sync fields)
-- Background job system in use: Celery, Redis Queue, cron, or other
-- Any existing sync logic (search for `sync`, `modified_after`, `last_synced_at`)
+- **`linked_accounts` table structure**: columns, indexes, presence of `initial_sync_complete`, `account_token`, `merge_account_id`, etc.
+- **Background job system**: Celery, Redis Queue, BullMQ, Sidekiq, cron, or other. Record what you find or `not found`.
+- **Existing sync logic**: search for `sync`, `modified_after`, `last_synced_at`.
+- **Body-parsing middleware**: search for `express.json()`, `bodyParser.json()`, framework JSON middleware. Webhook signature verification needs raw bytes.
+- **Backend Merge SDK installed?** Search for `@mergeapi/merge-node-client`, `MergePythonSDK`, etc. Record yes/no.
 
 **1c. Confirm readiness** with a brief summary:
 
 1. Sync docs loaded (list both files read)
-2. Which Merge common models will be synced — if not yet specified, ask the user now
-3. Destination tables for each model
-4. Background job system identified (or note if none found)
-5. Ready to proceed to the next implementation step
+2. `linked_accounts` schema (`initial_sync_complete` present / missing)
+3. Background job system: `{name}` or `not found`
+4. Backend Merge SDK installed: yes / no
+5. Body-parsing middleware identified (relevant for webhook raw-body handling)
+
+**1d. Ask all unresolved questions in one message** before proceeding to Step 2:
+
+> Before I start building, a few quick questions:
+>
+> 1. **Which Merge common models will you sync?** (e.g. `Employee`, `Contact`, `Ticket`) — and what destination tables map to each?
+>
+> 2. **Webhook endpoint feasibility**: Does your deployment have a publicly reachable URL where Merge can POST webhooks?
+>    - **Production / staging URL** — webhooks are the primary recommended approach.
+>    - **Local dev only (no public URL yet)** — start with polling; add webhooks before going live. ngrok / cloudflared work for testing.
+>    - **Public URL not possible** (air-gapped, restrictive network) — polling-only.
+>    Which fits your environment?
+>
+> 3. **Backend SDK preference**: [If not installed:] Would you prefer the official Merge SDK (recommended) or raw HTTP? [If already installed:] I see the Merge SDK is in your dependencies — I'll use it unless you prefer raw HTTP.
+>
+> 4. **Job system**: [If found:] I found `{name}` — I'll wire jobs to it. [If not found:] Should I scaffold a cron job, or do you have a preferred queue/scheduler?
+
+Record the user's answers. Carry them as context into Step 2 (and Step 3 if running both).
 
 ### Step 2: Implement sync — webhooks primary, polling fallback
 
