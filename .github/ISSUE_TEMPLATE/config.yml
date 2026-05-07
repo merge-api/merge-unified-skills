@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Merge documentation
+    url: https://docs.merge.dev
+    about: Reference docs for the Merge Unified API.
+  - name: Merge support
+    url: https://help.merge.dev
+    about: Questions about the Merge platform itself (not this skills repo).
+  - name: Security vulnerabilities
+    url: https://github.com/merge-api/merge-unified-skills/blob/main/SECURITY.md
+    about: Report security issues privately, not via public issues.

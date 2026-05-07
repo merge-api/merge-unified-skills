@@ -1,0 +1,19 @@
+{
+  "name": "merge-unified-skills",
+  "description": "Claude Code skills for onboarding to the Merge Unified API — integrate, validate, and build complete connection workflows",
+  "owner": {
+    "name": "Merge",
+    "email": "support@merge.dev"
+  },
+  "plugins": [
+    {
+      "name": "merge-unified",
+      "source": "./",
+      "description": "Claude Code skills for integrating with and building on the Merge Unified API",
+      "version": "1.0.0",
+      "author": {
+        "name": "Merge"
+      }
+    }
+  ]
+}
