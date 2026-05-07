@@ -30,19 +30,19 @@ After installing, open Claude Code and try:
 ### Onboard to the Merge Unified API
 
 ```
-/merge-unified:merge-unified-onboarding
+/merge-unified:onboarding
 ```
 
 ### Implement Merge Link in your app
 
 ```
-/merge-unified:merge-unified-implementing-link
+/merge-unified:implementing-link
 ```
 
 ### Set up data syncing
 
 ```
-/merge-unified:merge-unified-implementing-sync
+/merge-unified:implementing-sync
 ```
 
 Or just describe what you want — Claude will pick the right skill:
@@ -57,11 +57,11 @@ Or just describe what you want — Claude will pick the right skill:
 
 | Skill | Command | What it does |
 |-------|---------|--------------|
-| **Merge Onboarding** | `/merge-unified:merge-unified-onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
-| **Integration Validator** | `/merge-unified:merge-unified-validate` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
-| **Implementing Merge Link** | `/merge-unified:merge-unified-implementing-link` | Full Merge Link implementation: database schema, backend API (link token, token exchange, relink, delete), and frontend UI. Step 1 loads context inline; Steps 2–4 invoke focused sub-skills (database setup, backend endpoints, and frontend — connect button OR marketplace). |
-| **Implementing Merge Sync** | `/merge-unified:merge-unified-implementing-sync` | Set up data syncing after a connection is established. Webhooks are the production-recommended primary; polling is the development starting point and a production fallback. A single skill per approach covers both initial and subsequent syncs. |
-| **Implementing Post-Connection** | `/merge-unified:merge-unified-implementing-post-connection` | Build the post-connection experience: integration settings page (with persistence backend), sync status UI, relinking, custom field mappings, and category-aware data-scope filtering. 6 numbered steps; Step 1 loads context inline. |
+| **Merge Onboarding** | `/merge-unified:onboarding` | Walk a developer from signup to a working Linked Account: SDK install, link_token → account_token flow, first API call, webhooks, and the production checklist. |
+| **Integration Validator** | `/merge-unified:integration-validator` | Run diagnostic checks against a live Merge integration: API key, account_token, sync status, data access, pagination. Outputs a pass/fail report with fixes. |
+| **Implementing Merge Link** | `/merge-unified:implementing-link` | Full Merge Link implementation: database schema, backend API (link token, token exchange, relink, delete), and frontend UI. Step 1 loads context inline; Steps 2–4 invoke focused sub-skills (database setup, backend endpoints, and frontend — connect button OR marketplace). |
+| **Implementing Merge Sync** | `/merge-unified:implementing-sync` | Set up data syncing after a connection is established. Webhooks are the production-recommended primary; polling is the development starting point and a production fallback. A single skill per approach covers both initial and subsequent syncs. |
+| **Implementing Post-Connection** | `/merge-unified:implementing-post-connection` | Build the post-connection experience: integration settings page (with persistence backend), sync status UI, relinking, custom field mappings, and category-aware data-scope filtering. 6 numbered steps; Step 1 loads context inline. |
 
 ## What You'll Need
 
