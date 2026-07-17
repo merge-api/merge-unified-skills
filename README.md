@@ -121,6 +121,21 @@ Convert all 16 skills to 9 AI coding tools with a single script.
 | Antigravity | `<target>/.gemini/antigravity/skills/` (project) or `~/.gemini/antigravity/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool antigravity --target .` |
 | Hermes Agent | `<target>/.hermes/skills/` (project) or `~/.hermes/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool hermes --target .` |
 
+### Codex (no conversion needed)
+
+The skills in `skills/` are already in the format Codex reads, so you can install them in two commands without running `convert.sh`:
+
+```bash
+git clone https://github.com/merge-api/merge-unified-skills.git
+mkdir -p /path/to/your/project/.codex/skills && cp -r merge-unified-skills/skills/* /path/to/your/project/.codex/skills/
+```
+
+To connect Codex to the Merge docs MCP server:
+
+```bash
+codex mcp add docs-merge-dev --url https://docs.merge.dev/_mcp/server
+```
+
 ### How it works
 
 ```bash
