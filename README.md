@@ -1,8 +1,8 @@
-# Merge Unified API — Claude Code Skills
+# Merge Unified API — AI Agent Coding Skills
 
-A Claude Code plugin with skills for integrating with and building on the [Merge Unified API](https://docs.merge.dev/) — one API for HRIS, ATS, CRM, Accounting, Ticketing, File Storage, Knowledge Base, and Marketing integrations.
+Skills for integrating with and building on the [Merge Unified API](https://docs.merge.dev/) — one API for HRIS, ATS, CRM, Accounting, Ticketing, File Storage, Knowledge Base, and Marketing integrations.
 
-## Installation
+## Installation (Claude Code)
 
 Add the plugin marketplace, then install:
 
@@ -19,13 +19,21 @@ If you prefer to add skills directly to a single project:
 
 ```bash
 git clone https://github.com/merge-api/merge-unified-skills.git
-mkdir -p /path/to/your/project/.claude/skills/
-cp -r merge-unified-skills/skills/* /path/to/your/project/.claude/skills/
+mkdir -p /path/to/your/project/.claude/skills && cp -r merge-unified-skills/skills/* /path/to/your/project/.claude/skills/
+```
+
+## Installation (Codex)
+
+The skills in `skills/` are already in the format Codex reads, so no conversion step is needed — install directly:
+
+```bash
+git clone https://github.com/merge-api/merge-unified-skills.git
+mkdir -p /path/to/your/project/.codex/skills && cp -r merge-unified-skills/skills/* /path/to/your/project/.codex/skills/
 ```
 
 ## Getting Started
 
-After installing, open Claude Code and try:
+After installing, open Claude Code, Codex, or your preferred coding agent and try:
 
 ### Onboard to the Merge Unified API
 
@@ -45,7 +53,7 @@ After installing, open Claude Code and try:
 /merge-unified:implementing-sync
 ```
 
-Or just describe what you want — Claude will pick the right skill:
+Or just describe what you want — Claude, Codex, or your coding agent will pick the right skill:
 
 - "Add Merge to this project"
 - "Set up an HRIS integration with Merge"
@@ -111,30 +119,15 @@ Convert all 16 skills to 9 AI coding tools with a single script.
 
 | Tool | Format | Install |
 |------|--------|---------|
+| Codex | `.codex/skills/` | No conversion needed — see [Installation (Codex)](#installation-codex) above |
 | Cursor | `.cursor/rules/` | `./scripts/convert.sh --tool cursor --target .` |
 | Aider | `CONVENTIONS.md` | `./scripts/convert.sh --tool aider --target .` |
 | Windsurf | `.windsurf/skills/` | `./scripts/convert.sh --tool windsurf --target .` |
 | Kilo Code | `.kilocode/rules/` | `./scripts/convert.sh --tool kilocode --target .` |
 | OpenCode | `.opencode/skills/` | `./scripts/convert.sh --tool opencode --target .` |
-| Codex | `.codex/skills/` | `./scripts/convert.sh --tool codex --target .` |
 | Augment | `.augment/rules/` | `./scripts/convert.sh --tool augment --target .` |
 | Antigravity | `<target>/.gemini/antigravity/skills/` (project) or `~/.gemini/antigravity/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool antigravity --target .` |
 | Hermes Agent | `<target>/.hermes/skills/` (project) or `~/.hermes/skills/` (user-global, pass `--target $HOME`) | `./scripts/convert.sh --tool hermes --target .` |
-
-### Codex (no conversion needed)
-
-The skills in `skills/` are already in the format Codex reads, so you can install them in two commands without running `convert.sh`:
-
-```bash
-git clone https://github.com/merge-api/merge-unified-skills.git
-mkdir -p /path/to/your/project/.codex/skills && cp -r merge-unified-skills/skills/* /path/to/your/project/.codex/skills/
-```
-
-To connect Codex to the Merge docs MCP server:
-
-```bash
-codex mcp add docs-merge-dev --url https://docs.merge.dev/_mcp/server
-```
 
 ### How it works
 
@@ -156,6 +149,38 @@ Each tool gets:
 - Zero manual conversion work
 
 Run `./scripts/convert.sh --list` to see all supported tools.
+
+## Connect to Merge Docs via MCP
+
+Connect your agent to Merge's docs through MCP to get answers for your specific use case.
+
+Select your AI agent and run the following command in your project:
+
+**Claude Code**
+
+```bash
+claude mcp add --transport http docs-merge-dev https://docs.merge.dev/_mcp/server
+```
+
+**Codex**
+
+```bash
+codex mcp add docs-merge-dev --url https://docs.merge.dev/_mcp/server
+```
+
+**Cursor**
+
+Add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "docs-merge-dev": {
+      "url": "https://docs.merge.dev/_mcp/server"
+    }
+  }
+}
+```
 
 ## License
 
