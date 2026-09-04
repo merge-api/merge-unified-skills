@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.5.0
+  version: 0.5.1
 ---
 
 # Implementing Merge Link
