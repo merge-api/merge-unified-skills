@@ -270,7 +270,9 @@ Best for detecting **initial sync completion** and account-level sync events.
 - `data.sync_status`: Object with all models and their sync results
 - Each model includes `last_sync_finished` and `last_sync_result`
 
-### `{CommonModel}.synced` (e.g., `Employee.synced`)
+### `{WebhookModel}.synced` (e.g., `Employee.synced`)
+
+> **The model name in the event string is not always the Common Model name.** CRM, File Storage, Knowledge Base, and Marketing carry an internal prefix on the wire — `CRMAccount.synced`, `FileStorageFile.synced`, `KnowledgeBaseArticle.synced`, `MKTGCampaign.synced`. HRIS, ATS, Accounting, and Ticketing are mostly unprefixed (`Employee.synced`, `Candidate.synced`, `Invoice.synced`, `Ticket.synced`), with exceptions such as `TicketingContact` and `AccountingTransaction`. The verbatim list per category is in `/merge-unified:onboarding` → `references/webhooks.md`.
 
 Best for **granular, model-specific** sync notifications during subsequent syncs.
 
@@ -302,7 +304,7 @@ Best for **granular, model-specific** sync notifications during subsequent syncs
 
 **Key Fields**:
 - `data.sync_status.last_sync_finished`: Timestamp for incremental fetching
-- `data.sync_status.last_sync_result`: Sync outcome (DONE, PARTIALLY_SYNCED, FAILED)
+- `data.sync_status.last_sync_result`: Sync outcome — one of `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED`, `PAUSED`. `PARTIALLY_SYNCED` is terminal (the sync finished with some fields failing), and `PAUSED` means the Linked Account has seen no inbound API request or webhook for over 2 weeks, or failed syncs for over 2 weeks — neither resolves by waiting
 - `data.synced_fields`: List of fields that were updated
 
 ### Webhook Processing Pattern

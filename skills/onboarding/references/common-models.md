@@ -34,7 +34,9 @@ Fields below are in addition to the base set.
 | `manager` | string (UUID) | FK to Employee |
 | `team` | string (UUID) | FK to Team |
 
-Other HRIS Common Models: `Employment`, `Team`, `Location`, `Company`, `Group`, `PayrollRun`, `Benefit`, `TimeOff`, `BankInfo`, `Tax`.
+Other HRIS Common Models: `Employment`, `Team`, `Location`, `Company`, `Group`, `PayGroup`, `PayrollRun`, `EmployeePayrollRun`, `Benefit`, `EmployerBenefit`, `TimeOff`, `TimeOffBalance`, `TimesheetEntry`, `BankInfo`, `Dependent`.
+
+> `Deduction`, `Earning`, and `Tax` are nested arrays on `EmployeePayrollRun` — they have no list endpoint and no scope of their own. Read them off the payroll run.
 
 **Scopes to enable** for first sync: `Employee` (always), `Employment` (for job titles/pay), `Team`, `Location`.
 
@@ -54,7 +56,9 @@ Other HRIS Common Models: `Employment`, `Team`, `Location`, `Company`, `Group`, 
 | `last_interaction_at` | datetime | Last touch from recruiter |
 | `is_private` | boolean | |
 
-Other ATS Common Models: `Application`, `Job`, `Department`, `Office`, `RejectReason`, `Tag`, `Activity`, `Attachment`, `Interview`, `Offer`, `ScoreCard`, `EEOC`.
+Other ATS Common Models: `Application`, `Job`, `JobPosting`, `JobInterviewStage`, `Department`, `Office`, `RejectReason`, `Tag`, `Activity`, `Attachment`, `ScheduledInterview`, `Offer`, `Scorecard`, `EEOC`, `RemoteUser`, `Assessment`, `AssessmentTemplate`, `ScreeningQuestion`.
+
+> The interview model is `ScheduledInterview` (endpoint `/interviews`) and the scorecard model is `Scorecard` (endpoint `/scorecards`). `Interview` and `ScoreCard` are not valid model names — a scope lookup or SDK path using them will not resolve.
 
 **Scopes to enable** for recruiting workflows: `Candidate`, `Application`, `Job`, `Activity`.
 
@@ -96,9 +100,11 @@ Other CRM Common Models: `Account`, `Lead`, `Opportunity`, `Stage`, `Task`, `Not
 | `memo` | string | |
 | `company` | string (UUID) | FK to Company |
 
-Other Accounting Common Models: `Account`, `JournalEntry`, `Transaction`, `Payment`, `Expense`, `CreditNote`, `PurchaseOrder`, `Vendor`, `Item`, `TrackingCategory`.
+Other Accounting Common Models: `Account`, `Contact`, `JournalEntry`, `Transaction`, `GeneralLedgerTransaction`, `Payment`, `PaymentMethod`, `PaymentTerm`, `Expense`, `ExpenseReport`, `CreditNote`, `VendorCredit`, `PurchaseOrder`, `SalesOrder`, `Item`, `ItemFulfillment`, `TrackingCategory`, `TaxRate`, `AccountingPeriod`, `CompanyInfo`, `Project`, `Employee`, `BalanceSheet`, `IncomeStatement`, `CashFlowStatement`.
 
-**Scopes to enable** for financial reporting: `Invoice`, `Payment`, `Account`, `Vendor`, `Contact`.
+> **There is no `Vendor` Common Model.** Vendors and suppliers are `Contact` records with `is_supplier: true` (customers are `is_customer: true`; both flags can be true on one record). Filter or reconcile on `name`, `email_address`, and `tax_number`.
+
+**Scopes to enable** for financial reporting: `Invoice`, `Payment`, `Account`, `Contact`.
 
 ---
 
@@ -158,7 +164,7 @@ Other File Storage Common Models: `Folder`, `Drive`, `User`, `Group`, `Permissio
 | `checksum` | string | |
 | `article_url` | string | Direct link in source provider |
 
-Other Knowledge Base Common Models: `Container` (folders/spaces), `User`, `Attachment`, `Tag`.
+Other Knowledge Base Common Models: `Container` (folders/spaces), `User`, `Group`, `Attachment`.
 
 **Scopes to enable** for KB sync: `Article`, `Container`, `User`.
 
@@ -179,6 +185,125 @@ Other Marketing Common Models: `Contact`, `List`, `Template`, `Action`, `Event`,
 **Scopes to enable** for campaign sync: `Campaign`, `Contact`, `List`.
 
 ---
+
+## Which endpoints accept writes
+
+Two separate questions, and conflating them is the usual source of a wrong answer:
+
+1. **Does the Merge API expose a write verb on this endpoint?** Answered by the table below.
+2. **Does the connected provider support that write?** Answered per Linked Account at runtime — not from any table.
+
+For (2), call `GET /{model}/meta/post` before a create to get the provider's `request_schema` for that account, including which fields are actually required. `GET /available-actions` returns each model's `available_operations` (`FETCH`, `CREATE`, …), `required_post_parameters`, and `supported_fields` for the connected integration. A `POST` that the API accepts can still come back with entries in `warnings` because the provider rejected fields — always read `warnings` on the response, not just the status code.
+
+Every write returns an envelope, never the bare object:
+
+```json
+{ "model": { ... }, "warnings": [ ... ], "errors": [ ... ] }
+```
+
+The table below is the API surface as of the current schema. Verbs are shown against the collection path; `PATCH` sits on `/{path}/{id}`.
+
+### HRIS
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/employees` | GET, POST |
+| `/time-off` | GET, POST |
+| `/timesheet-entries` | GET, POST |
+
+Read-only (GET): `/bank-info`, `/benefits`, `/companies`, `/dependents`, `/employee-payroll-runs`, `/employer-benefits`, `/employments`, `/groups`, `/locations`, `/pay-groups`, `/payroll-runs`, `/teams`, `/time-off-balances`
+
+### ATS
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/activities` | GET, POST |
+| `/applications` | GET, POST |
+| `/assessment-templates` | GET, POST |
+| `/assessments` | GET, POST, PATCH |
+| `/attachments` | GET, POST |
+| `/candidates` | GET, POST, PATCH |
+| `/interviews` | GET, POST |
+
+Read-only (GET): `/departments`, `/eeocs`, `/job-interview-stages`, `/job-postings`, `/jobs`, `/offers`, `/offices`, `/reject-reasons`, `/scorecards`, `/tags`, `/users`
+
+### CRM
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/accounts` | GET, POST, PATCH |
+| `/contacts` | GET, POST, PATCH |
+| `/engagements` | GET, POST, PATCH |
+| `/leads` | GET, POST |
+| `/notes` | GET, POST |
+| `/opportunities` | GET, POST, PATCH |
+| `/tasks` | GET, POST, PATCH |
+
+Read-only (GET): `/custom-object-classes`, `/engagement-types`, `/stages`, `/users`
+
+### Accounting
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/accounts` | GET, POST |
+| `/attachments` | GET, POST |
+| `/bank-feed-accounts` | GET, POST |
+| `/bank-feed-transactions` | GET, POST |
+| `/contacts` | GET, POST, PATCH |
+| `/credit-notes` | GET, POST, PATCH |
+| `/expense-reports` | GET, POST |
+| `/expenses` | GET, POST |
+| `/invoices` | GET, POST, PATCH |
+| `/item-fulfillments` | GET, POST |
+| `/items` | GET, POST, PATCH |
+| `/journal-entries` | GET, POST |
+| `/payments` | GET, POST, PATCH |
+| `/purchase-orders` | GET, POST |
+| `/sales-orders` | GET, POST |
+| `/vendor-credits` | GET, POST, PATCH |
+
+Read-only (GET): `/accounting-periods`, `/balance-sheets`, `/cash-flow-statements`, `/company-info`, `/employees`, `/general-ledger-transactions`, `/income-statements`, `/payment-methods`, `/payment-terms`, `/projects`, `/tax-rates`, `/tracking-categories`, `/transactions`
+
+### Ticketing
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/attachments` | GET, POST |
+| `/comments` | GET, POST |
+| `/contacts` | GET, POST |
+| `/tickets` | GET, POST, PATCH |
+
+Read-only (GET): `/accounts`, `/collections`, `/projects`, `/roles`, `/tags`, `/teams`, `/users`
+
+### File Storage
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/files` | GET, POST |
+| `/folders` | GET, POST |
+
+Read-only (GET): `/drives`, `/groups`, `/users`
+
+### Knowledge Base
+
+Every endpoint in this category is read-only (GET): `/articles`, `/attachments`, `/containers`, `/groups`, `/users`
+
+### Marketing
+
+| Endpoint | Supported verbs |
+|---|---|
+| `/actions` | GET, POST |
+| `/automations` | GET, POST |
+| `/campaigns` | GET, POST |
+| `/contacts` | GET, POST |
+| `/lists` | GET, POST |
+| `/templates` | GET, POST |
+
+Read-only (GET): `/emails`, `/events`, `/messages`, `/users`
+
+⚠️ **Marketing Automation has no public API reference and no SDK namespace.** The `mktg` endpoints above exist and `mktg` is a valid `categories` value on a link_token, but there is no docs page for the category and no client exposes `merge.mktg.*`. Build against the raw REST endpoints and verify each one against a live Linked Account before promising it to a customer.
+
+⚠️ **`DELETE` is not part of the Common Model surface.** `DELETE /field-mappings/{field_mapping_id}` is the only `DELETE` verb in the whole Unified API. Removing a Linked Account is `POST /delete-account`, not an HTTP `DELETE`. To remove a record on the provider, use Passthrough.
 
 ## Pagination
 
@@ -223,7 +348,7 @@ Use `modified_after` in your sync logic to avoid re-pulling unchanged data.
 
 Each Common Model record can include a `remote_data` field with the raw provider response. Useful when you need a provider-specific field that isn't on the Common Model.
 
-Enable Remote Data per model in the dashboard: **Configuration → Scopes → toggle Remote Data**.
+Enable Remote Data per model in the dashboard: **Configuration → Scopes → toggle Remote Data**, then pass `include_remote_data=true` on the request. Remote Data is only available on Professional and Enterprise plans — on Launch the toggle isn't there and the field comes back null.
 
 ```python
 # After enabling Remote Data

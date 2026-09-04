@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # Implementing Merge Sync via Webhooks (Primary)
@@ -50,7 +50,9 @@ If invoked from `implementing-sync`, these were answered in Step 1 — use that 
 
 Go to **https://app.merge.dev/configuration/webhooks → Add webhook**. Point it to `POST /api/webhooks/merge` on your server. Subscribe to `Linked Account synced` events.
 
-For production, also subscribe to `Linked Account.sync_completed` (recommended) — one event per sync covers all models in one payload. Alternatively, subscribe to `{CommonModel}.synced` events for per-model granularity if you need progressive processing.
+For production, also subscribe to `LinkedAccount.sync_completed` (recommended) — one event per sync covers all models in one payload. Alternatively, subscribe to `{WebhookModel}.synced` events for per-model granularity if you need progressive processing.
+
+> **The model name in the event string is not always the Common Model name.** CRM, File Storage, Knowledge Base, and Marketing carry an internal prefix on the wire — `CRMAccount.synced`, `FileStorageFile.synced`, `KnowledgeBaseArticle.synced`, `MKTGCampaign.synced`. HRIS, ATS, Accounting, and Ticketing are mostly unprefixed (`Employee.synced`, `Candidate.synced`, `Invoice.synced`, `Ticket.synced`), with exceptions such as `TicketingContact` and `AccountingTransaction`. The verbatim list per category is in `/merge-unified:onboarding` → `references/webhooks.md`.
 
 > **Tunnel-hostname rotation warning:** cloudflared quick mode and ngrok free tier rotate hostnames on every restart, breaking the registered emitter URL. Use named/reserved tunnels for repeated dev work, or expect to re-register on each restart.
 
@@ -60,28 +62,42 @@ Every Merge webhook delivers this shape:
 
 | Field | Type | Notes |
 |---|---|---|
-| `hook.event` | string | Event type, e.g. `"Linked Account synced"` |
+| `hook.event` | string | Exact event string, e.g. `"LinkedAccount.sync_completed"` or `"Candidate.changed"` |
 | `hook.id` | string (UUID) | Webhook config ID |
 | `linked_account.id` | string (UUID) | Merge's Linked Account ID — match to your `merge_account_id` column |
 | `linked_account.end_user_origin_id` | string | The origin ID you sent in `link_token` creation |
-| `linked_account.integration` | string | Provider slug, e.g. `"salesforce"` |
+| `linked_account.integration` | string | Provider **display name**, e.g. `"Salesforce"` |
+| `linked_account.integration_slug` | string | Provider slug, e.g. `"salesforce"` — match on this, not on `integration` |
 | `linked_account.category` | string | e.g. `"crm"`, `"hris"`, `"ats"`, `"ticketing"`, `"accounting"` |
 | `data` | object | Event-specific payload (sync metadata for sync events) |
 
-**For sync events**, `data.sync_status` is keyed by model ID. Each entry has `last_sync_finished` (Merge's timestamp) and `last_sync_result` (`DONE`, `PARTIALLY_SYNCED`, or `FAILED`):
+**For sync events**, `data.sync_status` is keyed by model ID. Each entry has `last_sync_finished` (Merge's timestamp), `last_sync_result` (any of `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `SYNCING`, `DISABLED`, `PAUSED`), `data_fresh_as_of`, and `sync_status_reason`:
 
 ```javascript
 {
-  "hook": { "event": "Linked Account synced" },
+  "hook": { "event": "LinkedAccount.sync_completed" },
   "linked_account": {
     "id": "merge-uuid",
     "end_user_origin_id": "your_user_id",
     "category": "crm"
   },
   "data": {
+    "is_initial_sync": false,
+    "integration_name": "Salesforce",
+    "integration_id": "salesforce",
     "sync_status": {
-      "crm.Contact": { "last_sync_finished": "2024-01-15T22:46:41Z", "last_sync_result": "DONE" },
-      "crm.Account":  { "last_sync_finished": "2024-01-15T22:46:40Z", "last_sync_result": "DONE" }
+      "crm.Contact": {
+        "last_sync_finished": "2024-01-15T22:46:41Z",
+        "last_sync_result": "DONE",
+        "data_fresh_as_of": "2024-01-15T22:30:00Z",
+        "sync_status_reason": null
+      },
+      "crm.Account": {
+        "last_sync_finished": "2024-01-15T22:46:40Z",
+        "last_sync_result": "DONE",
+        "data_fresh_as_of": "2024-01-15T22:30:00Z",
+        "sync_status_reason": null
+      }
     }
   }
 }
@@ -93,7 +109,9 @@ This endpoint is security-critical. Follow these three rules exactly:
 
 1. **Verify HMAC-SHA256 signature FIRST** — before parsing the request body.
 2. **Queue the raw payload** for async processing.
-3. **Return 200 OK immediately** — Merge times out after **10 seconds** (or on 4xx/5xx) and retries 5 times over ~1 hour with exponential backoff. Aim to ACK in under 5 seconds.
+3. **Return 200 OK immediately** — Merge times out after **10 seconds**. Retries are 1 initial attempt + **2 retries** backing off 1s then 2s, and they fire **only on 5xx, a connection error, or a timeout**. A `4xx` from your endpoint drops the event permanently with no retry. Aim to ACK in under 5 seconds.
+
+⚠️ **Three attempts inside a few seconds is not delivery insurance.** A deploy window, or a framework that answers `400`/`422` on a payload it can't parse, loses the event outright. Keep a reconciliation poll (`GET /sync-status` or a `modified_after` sweep) as the backstop — see `/merge-unified:sync-implement-polling`.
 
 > **Order matters:** read the raw body *before* JSON parsing. If your framework auto-parses (e.g., Express with `app.use(express.json())`), use `express.raw({ type: '*/*' })` on the webhook route so you can compute HMAC against the raw Buffer.
 

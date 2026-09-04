@@ -18,7 +18,7 @@ The full lifecycle of every token Merge uses, from the first link to long-lived 
 ┌─────────────────────────────────────────────────────────────────────┐
 │  link_token                                                         │
 │  ─ Authorizes one Merge Link session for one end-user               │
-│  ─ Expires in 30 minutes (default and max)                          │
+│  ─ Expires in 30 minutes by default; 720 max (10080 w/ Magic Link)  │
 │  ─ Backend-generated, passed to frontend                            │
 │  ─ Single session use (don't cache or reuse)                        │
 └─────────────────────────────────────────────────────────────────────┘
@@ -109,7 +109,7 @@ response = merge.filestorage.link_token.create(
 # Email response.magic_link_url to alice@acme.com
 ```
 
-When the customer completes Magic Link, set up a webhook listener for the `linked_account.created` event to be notified.
+When the customer completes Magic Link, set up a webhook listener for the `LinkedAccount.linked` event to be notified.
 
 ## public_token → account_token exchange
 
@@ -120,7 +120,7 @@ Headers: `Authorization: Bearer YOUR_API_KEY`
 Response:
 ```json
 {
-  "account_token": "AT_xxxxxxxxxxxxxxxxxx",
+  "account_token": "T9klMDQrcHdm9jrtHuOS2Nf06BIHwMNjpPXPMB",
   "integration": {
     "name": "Google Drive",
     "categories": ["filestorage"],
@@ -171,11 +171,17 @@ Status field on the Linked Account. Check via API or webhook payloads.
 
 ## Rate limits
 
-Per Linked Account (not per API key):
+Per Linked Account (not per API key) — every Linked Account gets its own bucket, so 10 customers on Launch each get 100/min rather than sharing one pool:
 
-- Default: ~120 requests/min
-- Bursts above this return `429 Too Many Requests` with a `Retry-After` header
-- Use the SDK's built-in retry logic, or implement exponential backoff manually
+| Plan | Requests/min per Linked Account |
+|------|--------------------------------|
+| Launch | 100 |
+| Professional | 400 |
+| Enterprise | 600 |
+
+- Bursts above this return `429 Too Many Requests` with a `Retry-After` header (seconds to wait)
+- Some endpoints carry their own limits — check the endpoint's API reference page
+- Use the SDK's built-in retry logic, or implement exponential backoff that honors `Retry-After`
 
 ```python
 # SDK retry config
@@ -189,11 +195,15 @@ merge = Merge(
 
 ## Multi-region
 
-Merge has US and EU API endpoints. The base URL changes:
-- US: `https://api.merge.dev/api/...`
-- EU: `https://api-eu.merge.dev/api/...`
+Merge serves the Unified API from three regions. The base URL changes; the path after it does not:
 
-Use the EU endpoint if you signed up on the EU dashboard. The SDKs auto-detect from the API key, but you can override:
+| Region | Base URL |
+|--------|----------|
+| Global (US) | `https://api.merge.dev/api/{category}/v1` |
+| EU | `https://api-eu.merge.dev/api/{category}/v1` |
+| APAC | `https://api-ap.merge.dev/api/{category}/v1` |
+
+Use the regional endpoint matching the dashboard you signed up on. Keys and Linked Accounts are scoped to the region they were created in, so point the client at the right base URL explicitly rather than relying on a default:
 
 ```python
 merge = Merge(api_key="...", base_url="https://api-eu.merge.dev")

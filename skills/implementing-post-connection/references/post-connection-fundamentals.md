@@ -160,8 +160,8 @@ Sample **Common model synced** webhook payload for Candidates common model in AT
   },
   "linked_account": {
     "id": "a3602c03-aba7-4d9d-a349-dbc338504092",
-    "integration": "Workday",
-    "integration_slug": "workday",
+    "integration": "Ashby",
+    "integration_slug": "ashby",
     "category": "ats",
     "end_user_origin_id": "",
     "end_user_organization_name": "Test",
@@ -180,9 +180,11 @@ Sample **Common model synced** webhook payload for Candidates common model in AT
       "model_id": "ats.Candidate",
       "last_sync_start": "2023-09-27T20:50:47.490402Z",
       "next_sync_start": "2023-09-11T23:24:52.242660Z",
-      "status": "COMPLETE",
+      "status": "DONE",
       "last_sync_result": "DONE",
       "last_sync_finished": "2023-09-27T20:53:47.490402Z",
+      "data_fresh_as_of": "2023-09-27T20:50:47.490402Z",
+      "sync_status_reason": null,
       "is_initial_sync": true
     }
   }
@@ -193,7 +195,7 @@ Sample **Common model synced** webhook payload for Candidates common model in AT
 
 - `is_initial_sync = TRUE` identifies initial sync.
 - `model_name` identifies the common model
-- `status = COMPLETE` reflects all data in the particular common model has been synced.
+- `status = DONE` reflects all data in the particular common model has been synced. The model-level status values are `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED`, and `PAUSED` — `COMPLETE` belongs to the **Linked Account**, not to a model, so comparing a model status against `"COMPLETE"` never matches.
 
 **Recommendation:**
 
@@ -351,10 +353,12 @@ This approach gives customers end-to-end control over field mappings **inside yo
 
 **How it works:**
 
-- Fetch current Field Mappings with [POST /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-create).
-- Display fields available for Field Mapping with [/remote-fields](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/remote-fields-retrieve).
+- Fetch current Field Mappings with `GET /field-mappings`.
+- Display fields available for Field Mapping with [`GET /remote-fields`](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/remote-fields-retrieve).
 - Your UI collects user mapping selections.
-- You create these mappings with [POST /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-create) or update them with [PATCH /field-mapping](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-partial-update).
+- You create these mappings with [`POST /field-mappings`](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-create) or update them with [`PATCH /field-mappings/{field_mapping_id}`](https://docs.merge.dev/merge-unified/hris/linked-account/field-mapping/field-mappings-partial-update). `DELETE /field-mappings/{field_mapping_id}` removes one.
+
+> The path is `/field-mappings` (plural) on every verb, and the update and delete verbs take the mapping ID in the path. Reading current mappings is a `GET`, not a `POST`. Configuring Field Mappings through the API requires an Enterprise plan.
 - Merge applies and stores the mapping(s).
 - You ingest these mappings' values in your normal syncs from Merge to you via the [field_mappings](https://docs.merge.dev/merge-unified/supplemental-data/field-mapping/access-mapped-data) field.
 

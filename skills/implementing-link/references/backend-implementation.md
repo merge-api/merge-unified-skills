@@ -1230,7 +1230,7 @@ def create_link_token(user, category):
         logging.info(f"First linking attempt - new end_user_origin_id: {end_user_origin_id}")
 
     # Step 3: Generate fresh link token with the end_user_origin_id (reused or new)
-    # Link tokens expire quickly (~1 hour), so always generate fresh token
+    # Link tokens expire in 30 minutes by default, so always generate a fresh token
     # But reuse the same end_user_origin_id for incomplete attempts
     link_token = generate_merge_link_token(end_user_origin_id, category)
     return link_token

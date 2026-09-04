@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.0
+  version: 0.5.0
 ---
 
 # Implementing Merge Link
@@ -69,7 +69,7 @@ Then identify:
 
 > Before I start building, I have a few quick questions:
 >
-> 1. **Categories**: Based on your codebase I believe you're implementing [inferred list, or "—"]. Which Merge categories are you implementing? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`)
+> 1. **Categories**: Based on your codebase I believe you're implementing [inferred list, or "—"]. Which Merge categories are you implementing? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, `mktg`)
 >
 > 2. **Linked Account strategy** — at the Merge API level, `end_user_origin_id` + `category` determines uniqueness:
 >    - **Strategy 1**: Use a stable per-org identifier as `end_user_origin_id` (e.g. a GUID on your org record). Each org can have **1 Linked Account per category** (one HRIS, one ATS, etc.).

@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.6.0
+  version: 0.7.0
 ---
 
 # Merge Integration Assistant
@@ -28,7 +28,7 @@ Do NOT activate for: generic OAuth questions unrelated to Merge, or questions ab
 
 When this skill activates for the first time in a conversation, say:
 
-> I'm the Merge Integration Assistant (v0.4.0). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
+> I'm the Merge Integration Assistant (v0.7.0). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
 
 ## Overview
 
@@ -47,11 +47,23 @@ When this skill activates for the first time in a conversation, say:
 
 > This is not exhaustive — Merge supports many more providers per category. See the full list at https://merge.dev/integrations.
 
+⚠️ **Marketing Automation is the thin one.** The `mktg` endpoints exist and `mktg` is a valid `categories` value on a link_token, but the category has no public API reference (docs.merge.dev redirects `/mktg/*` to the HRIS overview) and no SDK exposes `merge.mktg.*`. If a developer asks for Marketing, say so up front, build against the raw REST endpoints, and verify each call against a live Linked Account. Every other category in the table has both a reference page and SDK coverage in at least Python.
+
 **Common Model**: a normalized data shape across providers. Whether the developer connects to any HRIS provider, they query the same `Employee` shape with the same fields.
 
 **Linked Account**: one end-customer's connection to one provider. Each Linked Account has an `account_token` that authenticates API calls for that customer's data.
 
-> **All code examples below use the developer's chosen category.** Replace the category slug (`hris`, `crm`, `ats`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, `mktg`) in SDK method paths, endpoint URLs, and categories arrays. The SDK method path matches the category: `merge.hris.link_token.create(...)`, `merge.crm.contacts.list(...)`, etc.
+> **All code examples below use the developer's chosen category.** Replace the category slug (`hris`, `crm`, `ats`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, `mktg`) in endpoint URLs and `categories` arrays. The SDK method path matches the category: `merge.hris.link_token.create(...)`, `merge.crm.contacts.list(...)`, etc.
+
+⚠️ **The SDKs cover fewer categories than the API does.** All eight slugs are valid on the REST API and in a `link_token`'s `categories` array, but the clients only namespace some of them:
+
+| SDK | Namespaces available |
+|-----|----------------------|
+| Python | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `knowledgebase`, `ticketing` (+ `calendar`, `chat`, `email`) |
+| Java / Kotlin | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `knowledgebase`, `ticketing` (+ `chat`) |
+| Node, Go, Ruby, C#/.NET | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `ticketing` |
+
+**No SDK has a `mktg` namespace**, and only Python and Java have `knowledgebase`. For a category your SDK doesn't cover, call the REST endpoints directly with `Authorization: Bearer` + `X-Account-Token` — the link_token and account_token flow is identical.
 
 ## Step 0: Confirm context
 
@@ -76,7 +88,7 @@ Direct them to: **https://app.merge.dev/keys**
 | `test_xxx` | Test | Test Linked Accounts | "Test Linked Accounts" page |
 | `production_xxx` | Production | **Real** Linked Accounts (billed, counted against quota) | "Production Linked Accounts" page |
 
-⚠️ **Verify your key prefix before connecting.** Production keys create real Linked Accounts that count against your plan. Free tier caps production Linked Accounts at 3. Use a `test_xxx` key for all development and testing.
+⚠️ **Verify your key prefix before connecting.** Production keys create real Linked Accounts that count against your plan, and the included count varies by plan — check https://www.merge.dev/pricing or your Billing page rather than assuming. Use a `test_xxx` key for all development and testing.
 
 ⚠️ **Dashboard views are key-specific.** Accounts created with a test key only appear on the "Test Linked Accounts" page — not the "Production Linked Accounts" page. If you can't find your account, check you're looking at the right view.
 
@@ -88,7 +100,7 @@ Pick the language. Detailed code in `references/sdk-quickstarts.md`.
 
 **Python:**
 ```bash
-pip install "MergePythonClient>=2.0.0"
+pip install "MergePythonClient>=4.0.0"
 ```
 
 **Node.js / TypeScript:**
@@ -258,7 +270,7 @@ function ConnectButton({ category }: { category: string }) {
 
 `onSuccess` fires with a **public_token** — a one-time token with a short TTL (~10 min). Send it and the `end_user_origin_id` to your backend immediately and call `/exchange` synchronously inside `onSuccess`. Don't store the public_token to retry later — design for "exchange right now."
 
-⚠️ **`onSuccess` is not the source of truth.** Merge creates the Linked Account on its side as soon as OAuth succeeds — *regardless* of whether your `/api/merge/exchange` ever runs. If the user closes the modal before exchange completes (network blip, accidental close, Finish-button skipped), you end up with an account on Merge that your DB doesn't know about. Reopening Merge Link with the same `end_user_origin_id` then shows "You're connected!" with no integration picker, looking like a frontend bug. **Production-grade fix:** subscribe to the `linked_account.created` webhook and create your local row from the webhook handler, not just from `onSuccess`. The `onSuccess` exchange becomes the fast path; the webhook is the backstop that closes the race. See Step 7.
+⚠️ **`onSuccess` is not the source of truth.** Merge creates the Linked Account on its side as soon as OAuth succeeds — *regardless* of whether your `/api/merge/exchange` ever runs. If the user closes the modal before exchange completes (network blip, accidental close, Finish-button skipped), you end up with an account on Merge that your DB doesn't know about. Reopening Merge Link with the same `end_user_origin_id` then shows "You're connected!" with no integration picker, looking like a frontend bug. **Production-grade fix:** subscribe to the `LinkedAccount.linked` webhook and create your local row from the webhook handler, not just from `onSuccess`. The `onSuccess` exchange becomes the fast path; the webhook is the backstop that closes the race. See Step 7.
 
 ## Step 5: Exchange public_token for account_token (backend)
 
@@ -419,7 +431,7 @@ if (result.warnings?.length) {
 
 ## Step 7: Set up webhooks (recommended)
 
-**Default sync cadence:** 24 hours in production (configurable per Linked Account).
+**Default sync cadence:** the Daily tier syncs every 24 hours. Sync frequency is a **plan setting applied per organization and category** (Highest / Daily / Monthly / Quarterly / Manual) — it is not a per-Linked-Account toggle. Check yours on the Billing page; changing it goes through Merge.
 
 Configure in dashboard:
 - **Emitters** (Merge → your app — sync-completed events, Linked Account lifecycle, what most apps want): https://app.merge.dev/configuration/webhooks/emitters
@@ -485,7 +497,7 @@ More webhook event types and payload schemas: `references/webhooks.md`.
 - [ ] **Selective Sync** configured for end-users with large datasets — filters at the source so Merge fetches only what you need (configure per Linked Account in the dashboard)
 - [ ] Tested with a production Linked Account (not just sandbox)
 
-⚠️ **Default scopes are minimal and category-specific.** A fresh Ticketing org has Ticket, Contact, Tag, Role, Team, Collection, Permission, RemoteFieldClass enabled by default — and User, Account, Project, Comment, Attachment, Viewer **disabled**. Most ticketing dashboards need User (resolve assignees) and Comment (ticket replies); both off until you flip them. Other categories have different defaults — verify yours at the URL above before assuming a query will return data.
+⚠️ **Default scopes are minimal and category-specific.** A fresh Ticketing org has Ticket and Contact on read+write, and Tag, Role, Team, Collection, Permission, RemoteFieldClass on read — with User, Account, Project, Comment, Attachment, Viewer **disabled**. Most ticketing dashboards need User (resolve assignees) and Comment (ticket replies); both off until you flip them. Other categories have different defaults — verify yours at the URL above before assuming a query will return data.
 
 Switch from `test_xxx` to `production_xxx` key and ship.
 
@@ -558,7 +570,7 @@ Switch from `test_xxx` to `production_xxx` key and ship.
 
 **SYMPTOM:** Reopening Merge Link shows "You're connected!" with no integration picker, but your DB has no record of the connection.
 **CAUSE:** OAuth completed on Merge's side but your `/exchange` never ran (modal closed early, network error, Finish-button skipped). Merge has the Linked Account; your DB doesn't.
-**FIX:** Reconcile from the `linked_account.created` webhook (production-correct), or delete the orphan at https://app.merge.dev/linked-accounts/test and reconnect (dev shortcut).
+**FIX:** Reconcile from the `LinkedAccount.linked` webhook (production-correct), or delete the orphan at https://app.merge.dev/linked-accounts/test and reconnect (dev shortcut).
 
 ---
 
