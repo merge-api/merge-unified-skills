@@ -4,7 +4,7 @@ description: Implement relinking as a first-class in-product flow and surface de
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Implementing Relinking and Detailed Error Messaging
@@ -25,6 +25,16 @@ Credentials expire, permissions get revoked, and admins change — relinking let
 Tell the user: "Implementing relinking requires storing error state on the `linked_accounts` table (an `error_category` column and optionally `error_detail`). I'll generate a migration for this. Ready to proceed?"
 
 Wait for confirmation before continuing.
+
+## Detecting that a relink is needed
+
+There is no `relink_needed` webhook. The dashboard's event list shows `LinkedAccount.status_changed`, but it has no emitter and never fires — do not build detection on it. Three signals that do work:
+
+1. **`Issue.new` webhook** — fires when Merge opens an issue on the account (expired credentials, missing permissions, provider outage). Pair with `Issue.resolved` to clear your banner.
+2. **Poll `GET /issues?linked_account_id={id}&status=ONGOING`** — the reliable backstop, and the only way to get the error detail you need for the message copy in Part 2.
+3. **`status` on `GET /account-details`** — `RELINK_NEEDED` is the account-level signal, but it lags the underlying issue.
+
+Use 1 for latency and 2 for correctness. An account can be broken without a webhook ever arriving, so the poll is not optional.
 
 ## Part 1: Relinking Flow
 
@@ -71,11 +81,18 @@ Prompt the codebase to integrate with Merge's Issues API and surface human-reada
 > |---|---|---|
 > | `id` | string (UUID) | Issue ID |
 > | `status` | string | `ONGOING`, `RESOLVED` |
-> | `error_description` | string | Human-readable error summary |
-> | `error_detail` | string | Specific detail (e.g., missing permission name) |
-> | `first_incident_time` | datetime | When the issue first appeared |
-> | `last_incident_time` | datetime | Most recent occurrence |
-> | `linked_account` | string (UUID) | Linked Account ID |
+> | `error_description` | string | Human-readable error summary, e.g. `"Missing Permissions"` |
+> | `error_details` | array of strings | Specific details, e.g. `["Missing employee permissions.", "Missing time off permissions."]` — **plural, and an array**, so join or list them rather than rendering the raw value |
+> | `first_incident_time` | datetime or null | When the issue first appeared |
+> | `last_incident_time` | datetime or null | Most recent occurrence |
+> | `is_muted` | boolean | Whether someone muted this issue in the dashboard |
+> | `end_user` | object | The end user the issue belongs to |
+>
+> ⚠️ **The field is `error_details` (array), not `error_detail` (string), and there is no `linked_account` field on an Issue.** Scope the request instead: `?linked_account_id={id}` or `?account_token={token}`. The response is paginated like every list endpoint — read `next` and follow the cursor.
+>
+> ⚠️ **Muted issues are excluded by default.** `GET /issues` omits anything muted in the dashboard unless you pass `include_muted=true`. If your banner disappears while the account is still broken, someone muted the issue. Decide deliberately whether your UI should see muted issues — for a customer-facing health banner, honoring the mute is usually right; for an internal ops view, pass `include_muted=true`.
+>
+> Other useful filters: `status=ONGOING`, `first_incident_time_after`, `last_incident_time_after`, `integration_name`, `end_user_organization_name`.
 >
 > For each issue, surface a message that answers: what is broken, who needs to fix it, and what action to take.
 >
@@ -88,7 +105,7 @@ Prompt the codebase to integrate with Merge's Issues API and surface human-reada
 > | Billing / plan restriction | "Access to [Integration] is blocked due to a plan restriction. Contact [Integration] support or your account admin." | Admin or support |
 > | Integration outage | "[Integration] is currently experiencing an outage. No action needed — we'll retry automatically." | None |
 >
-> Replace `[Integration]` with the integration name from the linked account record. Replace `[specific permission]` with the `error_detail` field from the Issues API response when available.
+> Replace `[Integration]` with the integration name from the linked account record. Replace `[specific permission]` with the entries in `error_details` when the array is non-empty.
 >
 > Store the latest error category on the `linked_accounts` record so the UI can render the correct banner without re-fetching issues on every page load.
 

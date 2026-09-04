@@ -1,6 +1,16 @@
 # SDK Quickstarts
 
-Copy-paste install + initialization + first API call for each supported SDK. All examples use **File Storage** as the category — swap to your category by replacing `filestorage` with `hris`, `ats`, `crm`, `accounting`, `ticketing`, `knowledgebase`, or `mktg`. The SDK method path matches the category: `merge.hris.employees.list()`, `merge.ats.candidates.list()`, etc.
+Copy-paste install + initialization + first API call for each supported SDK. All examples use **File Storage** as the category — swap to your category by replacing `filestorage` in the method path: `merge.hris.employees.list()`, `merge.ats.candidates.list()`, etc.
+
+⚠️ **Check that your SDK actually namespaces your category first.** All eight category slugs work on the REST API, but the clients cover fewer:
+
+| SDK | Namespaces available |
+|-----|----------------------|
+| Python | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `knowledgebase`, `ticketing` (+ `calendar`, `chat`, `email`) |
+| Java / Kotlin | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `knowledgebase`, `ticketing` (+ `chat`) |
+| Node, Go, Ruby, C#/.NET | `accounting`, `ats`, `crm`, `filestorage`, `hris`, `ticketing` |
+
+**No SDK exposes `mktg`**, and only Python and Java expose `knowledgebase`. For an uncovered category, use the raw HTTP section at the end of this file — the auth flow is identical.
 
 > **Important:** When using the SDK, API responses return SDK model objects (pydantic models in Python, typed objects in Node), not plain dicts. Use `.name`, `.id`, etc. to access fields. To serialize to JSON, use `.model_dump()` (Python) or spread `{ ...obj }` (Node). Don't pass SDK objects directly to `jsonify()` or `JSON.stringify()`.
 
@@ -9,7 +19,7 @@ Copy-paste install + initialization + first API call for each supported SDK. All
 ### Install
 
 ```bash
-pip install "MergePythonClient>=2.0.0"
+pip install "MergePythonClient>=4.0.0"
 ```
 
 Or with poetry:

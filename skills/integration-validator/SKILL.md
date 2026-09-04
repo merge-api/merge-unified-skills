@@ -10,7 +10,7 @@ description: |
 license: MIT
 metadata:
   author: Merge
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Merge Integration Validator
@@ -33,7 +33,7 @@ Do NOT activate for:
 
 When this skill activates for the first time in a conversation, say:
 
-> I'm the Merge Integration Validator (v0.1.0). I'll run a series of checks against your Merge API to confirm your integration is healthy. I'll need your API key, account_token, and the category you're integrating.
+> I'm the Merge Integration Validator (v0.2.0). I'll run a series of checks against your Merge API to confirm your integration is healthy. I'll need your API key, account_token, and the category you're integrating.
 
 ## Step 0: Gather inputs
 
@@ -95,17 +95,39 @@ def check_sync_status():
     if r.status_code == 200:
         data = r.json()
         models = data.get("results", [])
+        # PARTIALLY_SYNCED and PAUSED are terminal, not in-progress — only SYNCING is live.
         synced = [m for m in models if m.get("status") == "DONE"]
-        syncing = [m for m in models if m.get("status") in ("SYNCING", "PARTIALLY_SYNCED")]
+        syncing = [m for m in models if m.get("status") == "SYNCING"]
+        partial = [m for m in models if m.get("status") == "PARTIALLY_SYNCED"]
         failed = [m for m in models if m.get("status") == "FAILED"]
+        paused = [m for m in models if m.get("status") == "PAUSED"]
+        disabled = [m for m in models if m.get("status") == "DISABLED"]
+
+        def names(ms):
+            return ", ".join(m.get("model_name", "?") for m in ms)
+
         if failed:
-            names = ", ".join(m.get("model_name", "?") for m in failed)
-            return "FAIL", f"Sync failed for: {names}. Check Linked Account page in dashboard."
+            return "FAIL", f"Sync failed for: {names(failed)}. Check Linked Account page in dashboard."
+        elif paused:
+            return "FAIL", (f"Paused: {names(paused)}. No inbound API request or webhook for 2+ weeks, "
+                            "or failed syncs for 2+ weeks. Resume traffic to this Linked Account.")
+        elif partial:
+            return "WARN", (f"Partially synced: {names(partial)}. This is terminal, not in progress — "
+                            "some fields failed while others succeeded. Data is queryable but incomplete.")
         elif syncing:
-            names = ", ".join(m.get("model_name", "?") for m in syncing)
-            return "WARN", f"Still syncing: {names}. Wait and re-run."
+            stalled = [m for m in syncing if m.get("sync_status_reason")]
+            if stalled:
+                reasons = ", ".join(f"{m.get('model_name','?')}={m['sync_status_reason']}" for m in stalled)
+                return "WARN", f"Syncing, held up on: {reasons}. Wait and re-run."
+            return "WARN", f"Still syncing: {names(syncing)}. Wait and re-run."
+        elif not synced:
+            return "WARN", (f"No model is synced. Disabled scopes: {names(disabled) or 'none'}. "
+                            "Enable at /configuration/common-model-scopes.")
         else:
-            return "PASS", f"{len(synced)} models synced successfully"
+            msg = f"{len(synced)} models synced successfully"
+            if disabled:
+                msg += f" ({len(disabled)} disabled by scope: {names(disabled)})"
+            return "PASS", msg
     else:
         return "FAIL", f"Could not fetch sync status: {r.status_code}"
 

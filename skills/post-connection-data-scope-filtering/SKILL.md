@@ -13,7 +13,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Choosing a Data-Scope Filtering Strategy
@@ -32,7 +32,7 @@ Three pieces of information are needed before writing any filter logic.
 
 If invoked from `implementing-post-connection`, the first two were answered in Step 1 — use that context. Otherwise, gather them now:
 
-- **Categories**: Which Merge categories need filtering? (`hris`, `ats`, `crm`, `accounting`, `ticketing`) — drives which filter parameters apply.
+- **Categories and endpoints**: Which Merge categories and which specific endpoints need filtering? (`hris`, `ats`, `crm`, `accounting`, `ticketing`) — filters are defined per endpoint, so `/crm/v1/accounts` and `/crm/v1/contacts` accept different sets.
 - **Existing sync logic location**: Where is the sync code (webhook handler / polling job)? Filters apply inside it. Search for files that already call `/{category}/v1/{model}` or use `modified_after`.
 - **Filtering strategy preference**: pre-storage (Strategy 1) or post-storage (Strategy 2) — see the two-strategies section below. The recommendation is post-storage unless storage cost is a concern.
 
@@ -68,60 +68,85 @@ Start with **post-storage filtering (Strategy 2)** unless storage cost is a mean
 
 The Merge query params differ per category. The decision framework above is the same; only the filters themselves change. Use these as starting points; consult Merge's category-specific common-model docs for the full set.
 
-### HRIS — employee filtering
+> **Filters are per-endpoint, not per-category.** A parameter that exists on one endpoint is usually absent on its siblings — `owner_id` works on CRM accounts and opportunities but not on contacts; `account_id` works on contacts and opportunities but not on accounts. An unrecognized query param is ignored rather than rejected, so a typo returns a full unfiltered page and looks like the filter matched everything. Confirm each one against the endpoint's own API reference page before shipping.
+
+### HRIS — `GET /hris/v1/employees`
 
 | Parameter           | Values                          | Notes                                      |
 | ------------------- | ------------------------------- | ------------------------------------------ |
 | `employment_status` | `ACTIVE`, `INACTIVE`, `PENDING` | Most common filter                         |
-| `employment_type`   | `FULL_TIME`, `PART_TIME`, etc.  | Filter by work arrangement                 |
+| `employment_type`   | free-form string                | Provider's own type value, not a fixed enum |
 | `groups`            | Group UUIDs                     | Filter by department, location, subsidiary |
-| `expand`            | `employment`, `locations`, `manager` | Include nested objects in response   |
+| `manager_id`, `team_id`, `company_id` | UUID          | Filter by org placement                    |
+| `home_location_id`, `work_location_id` | UUID         | Filter by location                         |
+| `started_after` / `terminated_after`   | ISO date     | Filter by employment dates                 |
+| `expand`            | `employments`, `groups`, `manager`, `company`, `home_location`, `work_location`, `team`, `pay_group` | Comma-separated, no spaces |
 
-Example: `GET /hris/v1/employees?employment_status=ACTIVE`
+Example: `GET /hris/v1/employees?employment_status=ACTIVE&expand=employments,manager`
 
-### ATS — candidate / application filtering
+⚠️ `expand=employment` (singular) and `expand=locations` are not valid tokens. The relation is `employments`, and locations expand as `home_location` / `work_location`.
 
-| Parameter           | Values                                        | Notes                                       |
-| ------------------- | --------------------------------------------- | ------------------------------------------- |
-| `current_stage`     | Stage UUIDs                                   | Filter applications by pipeline stage       |
-| `credited_to`       | User UUID                                     | Filter by recruiter / hiring manager        |
-| `job_id`            | Job UUID                                      | Filter to candidates for one job            |
-| `expand`            | `applications`, `jobs`, `current_stage`, etc. | Include nested objects                      |
+### ATS — `GET /ats/v1/candidates` and `GET /ats/v1/applications`
 
-Example: `GET /ats/v1/candidates?expand=applications`, then post-filter by `applications[].current_stage` if pre-storage by stage.
+Pipeline-stage and recruiter filters live on **applications**, not candidates. A candidate has no stage of its own.
 
-### CRM — account / contact / opportunity filtering
+| Endpoint | Parameter | Values | Notes |
+| --- | --- | --- | --- |
+| `/applications` | `current_stage_id` | Stage UUID | Filter applications by pipeline stage |
+| `/applications` | `credited_to_id`   | RemoteUser UUID | Filter by recruiter / hiring manager |
+| `/applications` | `job_id`           | Job UUID | Filter to applications for one job |
+| `/applications` | `candidate_id`, `reject_reason_id`, `source` | UUID / string | Further narrowing |
+| `/candidates`   | `email_addresses`, `first_name`, `last_name`, `tags` | string | The filters candidates actually accepts |
+| `/candidates`   | `expand`           | `applications`, `attachments` | Only these two |
 
-| Parameter           | Values                | Notes                                       |
-| ------------------- | --------------------- | ------------------------------------------- |
-| `owner_id`          | User UUID             | Filter to records owned by a specific user  |
-| `account_id`        | Account UUID          | Filter contacts/opportunities to one account |
-| `stage`             | Stage UUID            | Filter opportunities by sales stage         |
-| `expand`            | `account`, `owner`    | Include nested objects                      |
+Example: `GET /ats/v1/applications?current_stage_id={uuid}&job_id={uuid}`
 
-Example: `GET /crm/v1/accounts?owner_id={uuid}`
+⚠️ `current_stage`, `credited_to`, and `job_id` are not parameters on `/candidates`, and the application-side names end in `_id`. To scope candidates by stage, filter `/applications` first and collect `candidate` IDs, or pull `?expand=applications` and post-filter on `applications[].current_stage`.
 
-### Ticketing — ticket / project filtering
+### CRM — `GET /crm/v1/accounts`, `/contacts`, `/opportunities`
+
+| Endpoint | Parameter | Values | Notes |
+| --- | --- | --- | --- |
+| `/accounts` | `owner_id` | User UUID | Filter to accounts owned by a user |
+| `/accounts` | `name` | string | Exact-name lookup |
+| `/accounts` | `expand` | `owner` | The only valid token here |
+| `/contacts` | `account_id` | Account UUID | Filter contacts to one account |
+| `/contacts` | `email_addresses`, `phone_numbers` | string | Identity lookups |
+| `/opportunities` | `owner_id`, `account_id`, `stage_id`, `status` | UUID / enum | Full set of scope filters |
+
+Example: `GET /crm/v1/opportunities?stage_id={uuid}&owner_id={uuid}`
+
+⚠️ There is no `stage` parameter — it's `stage_id`, and only on `/opportunities`. `owner_id` is not accepted on `/contacts`; scope contacts by `account_id` and resolve ownership from the parent account.
+
+### Ticketing — `GET /ticketing/v1/tickets`
 
 | Parameter           | Values            | Notes                                            |
 | ------------------- | ----------------- | ------------------------------------------------ |
-| `project_id`        | Project UUID      | Filter tickets to a specific project             |
-| `status`            | Status UUID       | Filter by ticket status                          |
-| `priority`          | Priority value    | Filter by priority threshold                     |
-| `assignee_ids`      | User UUIDs (list) | Filter to tickets assigned to specific users     |
-| `expand`            | `assignees`, `account`, `collections` | Include nested objects     |
+| `collection_ids`    | Collection UUIDs  | **This is the project/board filter** — Merge models boards and projects as Collections |
+| `status`            | free-form string  | The provider's status string, not a UUID and not the Common Model enum |
+| `priority`          | `HIGH`, `LOW`, `NORMAL`, `URGENT` | Exact match on one value, not a threshold |
+| `assignee_ids`, `creator_ids` | User UUIDs (list) | Filter by assignment or authorship |
+| `account_id`, `contact_id`, `parent_ticket_id` | UUID | Filter by relationship |
+| `ticket_type`, `tags`, `due_after`, `completed_after` | string / ISO date | Further narrowing |
+| `expand`            | `assignees`, `assigned_teams`, `account`, `contact`, `creator`, `collections`, `attachments`, `parent_ticket`, `permissions` | Comma-separated, no spaces |
 
-Example: `GET /ticketing/v1/tickets?project_id={uuid}&priority=HIGH`
+Example: `GET /ticketing/v1/tickets?collection_ids={uuid}&priority=HIGH`
 
-### Accounting — record filtering
+⚠️ There is no `project_id` parameter on `/tickets`. Merge exposes a separate `Project` model, but tickets are scoped by `collection_ids`. And `priority=HIGH` matches only HIGH — to get "HIGH or above" you pass `priority=HIGH` and `priority=URGENT` as separate calls, or filter after the fetch.
 
-| Parameter           | Values                | Notes                                         |
-| ------------------- | --------------------- | --------------------------------------------- |
-| `account_type`      | `ASSET`, `LIABILITY`, etc. | Filter chart-of-accounts entries        |
-| `transaction_date_after` | ISO date         | Filter transactions by date range             |
-| `company_id`        | Company UUID          | Filter to one company in a multi-entity setup |
+### Accounting — `GET /accounting/v1/accounts` and `/transactions`
 
-Example: `GET /accounting/v1/accounts?account_type=ASSET`
+| Endpoint | Parameter | Values | Notes |
+| --- | --- | --- | --- |
+| `/accounts` | `classification` | `ASSET`, `LIABILITY`, `EQUITY`, `EXPENSE`, `REVENUE` | **This is the chart-of-accounts filter** |
+| `/accounts` | `account_type` | free-form string | The provider's own type label, not the classification enum |
+| `/accounts` | `account_number`, `name`, `status`, `company_id` | string / UUID | Further narrowing |
+| `/transactions` | `transaction_date_after`, `transaction_date_before` | ISO date | Date-range filter |
+| `/transactions` | `company_id` | Company UUID | One company in a multi-entity setup |
+
+Example: `GET /accounting/v1/accounts?classification=ASSET`
+
+⚠️ `account_type=ASSET` does not work. `account_type` is an untyped passthrough of the provider's label; the ASSET/LIABILITY/EQUITY/EXPENSE/REVENUE enum is `classification`. And `transaction_date_after` is a `/transactions` parameter — on `/accounts` it is silently ignored.
 
 ## If you're building a filter UI for customers
 

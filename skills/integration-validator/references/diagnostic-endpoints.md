@@ -48,12 +48,25 @@ This single endpoint validates both credentials at once. If it returns 401, the 
   ]
 }
 ```
-**Status values:**
-- `DONE` — healthy, last sync completed
-- `SYNCING` — in progress
-- `PARTIALLY_SYNCED` — some data synced, still going
-- `FAILED` — sync failed, check dashboard for error details
-- `DISABLED` — model scope not enabled
+**Status values** — all six, and only two of them mean "in progress":
+
+| Status | Meaning | Terminal? |
+|---|---|---|
+| `SYNCING` | Merge is actively syncing this model, or a sync is queued for it | No |
+| `DONE` | Merge finished syncing the model successfully | Yes |
+| `PARTIALLY_SYNCED` | The sync finished, but one or more fields failed to sync while others succeeded | **Yes** |
+| `FAILED` | Merge failed to sync all Common Models within the sync | Yes |
+| `DISABLED` | The Common Model is disabled in Common Model Scopes | Yes |
+| `PAUSED` | The Linked Account has had no inbound API request or webhook for over 2 weeks, or failed syncs for over 2 weeks | Yes |
+
+⚠️ **`PARTIALLY_SYNCED` is terminal, not "still going."** Waiting on it never resolves. Treat it as "data is queryable but incomplete" and surface it, don't retry-loop on it.
+
+⚠️ **`PAUSED` and `DISABLED` will not progress on their own.** A validator that only branches on `DONE` / `SYNCING` / `FAILED` reports a paused or disabled account as healthy. `PAUSED` clears once traffic resumes; `DISABLED` clears only when someone enables the scope.
+
+Two more fields explain a `SYNCING` model that isn't moving:
+
+- `sync_status_reason` — `RATE_LIMITED` (paused behind the provider's rate limits) or `WAITING_ON_OTHER_MODELS` (on hold until other models finish). Null when progressing normally.
+- `data_fresh_as_of` — the start time of the most recent successful sync for the model, so data is current at least through this point. Null until the first sync completes. This is the timestamp to show a user, not `last_sync_start`.
 
 ## Check 4: Data Exists
 

@@ -20,7 +20,7 @@ Implements the server-side API that powers the Merge Link flow. These endpoints 
 
 Before writing any code, confirm or gather the following:
 
-- **Categories**: Which Merge categories are being implemented? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`) — used to scope endpoints.
+- **Categories**: Which Merge categories are being implemented? (`hris`, `ats`, `crm`, `accounting`, `ticketing`, `filestorage`, `knowledgebase`, `mktg`) — used to scope endpoints.
 - **Linked Account strategy**: 1 Linked Account per category per org (Strategy 1), or multiple per category (Strategy 2)? — drives `end_user_origin_id` generation in Endpoint 1.
 - **SDK vs raw HTTP**: Official Merge SDK (recommended) or raw HTTP calls?
 
@@ -51,7 +51,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 
 ### Endpoint 1: POST /api/merge/create-link-token
 
-1. Read `category` (validated against `["hris", "ats", "crm", "accounting", "ticketing", "filestorage", "knowledgebase"]`) and optional `integration` from request body. Reject unknown category values.
+1. Read `category` (validated against `["hris", "ats", "crm", "accounting", "ticketing", "filestorage", "knowledgebase", "mktg"]`) and optional `integration` from request body. Reject unknown category values.
 2. Determine `end_user_origin_id` based on the strategy chosen in Step 1:
    - **Strategy 1 (1 account per category)**: Use a stable per-org identifier — e.g. a GUID column already on your org/tenant table, or the org's primary key formatted as a string. This value must be the same every time the same org connects. Merge uses `end_user_origin_id + category` for uniqueness, so the same stable ID will produce one Linked Account per category per org.
    - **Strategy 2 (multiple accounts per category)**: Check for an existing `pending` record for this org+category first. If one exists (incomplete prior attempt), reuse its `end_user_origin_id`. If none exists, generate a new GUID. Do NOT generate a new GUID on every click — that creates duplicate Linked Accounts on every open-and-abandon. Full deduplication logic: see `../implementing-link/references/backend-implementation.md` under "Handling Incomplete Linking Attempts."

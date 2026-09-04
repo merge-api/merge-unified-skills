@@ -8,7 +8,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.4.0
 ---
 
 # Merge Post-Connection Implementation

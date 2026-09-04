@@ -4,7 +4,7 @@ description: Implement sync status visibility and user-facing messaging for the 
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.3.0
 ---
 
 # Surface Sync Status to End Users
@@ -40,9 +40,17 @@ Build three sync status UI states on the settings page. Your backend should poll
 | `results` | array | One entry per Common Model |
 | `results[].model_name` | string | e.g. `"Employee"`, `"Contact"` |
 | `results[].model_id` | string | e.g. `"hris.Employee"` |
-| `results[].status` | string | `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED` |
+| `results[].status` | string | `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED`, `PAUSED` |
+| `results[].sync_status_reason` | string or null | Why a `SYNCING` model isn't progressing: `RATE_LIMITED` or `WAITING_ON_OTHER_MODELS`. Null when progressing normally. |
 | `results[].is_initial_sync` | boolean | `true` if this is the first-ever sync for this model |
 | `results[].last_sync_start` | datetime | When the most recent sync started |
+| `results[].last_sync_finished` | datetime | When it finished |
+| `results[].last_sync_result` | string | Same six values as `status`, for the run that just completed |
+| `results[].data_fresh_as_of` | datetime or null | The point in time the model's data is complete through. Null until the first sync completes. |
+
+> **Show `data_fresh_as_of`, not `last_sync_start`.** `last_sync_start` is when Merge began the most recent attempt, which may have failed; `data_fresh_as_of` is the guarantee — "your data is current at least through this time." That's the timestamp a user can act on.
+
+> **`PARTIALLY_SYNCED` and `PAUSED` are terminal states.** `PARTIALLY_SYNCED` means the sync completed with some fields failing; it will not become `DONE` by waiting. `PAUSED` means the Linked Account has seen no inbound API request or webhook for over 2 weeks, or has failed syncs for over 2 weeks — it needs traffic or a fix, not patience.
 
 ### Your internal endpoint shape
 
@@ -79,19 +87,21 @@ When `initial_sync_complete == true` and all models report success, replace the 
 
 ### Pattern 3: Partial sync or error state
 
-If any model status maps to PARTIALLY_SYNCED or FAILED:
+If any model status maps to PARTIALLY_SYNCED, FAILED, or PAUSED:
 
-- Show a soft warning — not a hard error. Most partial syncs resolve automatically.
-- Message: "Most of your data has synced. Some records may still be loading — Merge will retry automatically. If this persists after 24 hours, contact support."
-- Distinguish partial sync (temporary, self-healing) from a broken connection (requires relinking via the reconnect flow).
-- Never surface raw status codes (SYNCING, DONE, PARTIALLY_SYNCED, FAILED) to end users — translate all values to plain language.
+- Show a soft warning for PARTIALLY_SYNCED — not a hard error. The next scheduled sync often picks up what failed.
+- Message: "Most of your data has synced. Some fields didn't come through on the last sync and Merge will try again on the next one. If this persists past a couple of syncs, contact support."
+- Do **not** describe PARTIALLY_SYNCED as "still loading." It's a finished sync with incomplete results, so a spinner that never resolves is the wrong affordance.
+- PAUSED needs its own copy, because it's caused by inactivity rather than by an error: the Linked Account has had no inbound API request or webhook for over 2 weeks, or failed syncs for over 2 weeks. Resuming traffic clears it.
+- Distinguish partial sync (incomplete data, retries on its own) from a broken connection (requires relinking via the reconnect flow).
+- Never surface raw status codes (SYNCING, DONE, PARTIALLY_SYNCED, FAILED, PAUSED, DISABLED) to end users — translate all values to plain language.
 
 ## UX Best Practices
 
 - Set time expectations on first display, before the user can wonder why nothing is showing.
 - Clarify what data IS included (e.g., employees, time-off records) and what is NOT (e.g., payroll details, if out of scope).
 - Use non-blocking UI — banners, not modals or error pages — so users can still explore the product.
-- Combine polling with webhooks for reliability: `Linked account synced` webhook for immediate notification, `/sync-status` polling as a fallback.
+- Combine polling with webhooks for reliability: the `LinkedAccount.sync_completed` webhook for immediate notification, `/sync-status` polling as a fallback.
 
 ## Testing Checklist
 

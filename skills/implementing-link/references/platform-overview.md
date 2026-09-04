@@ -322,7 +322,9 @@ Best for detecting initial sync completion and account-level sync events.
 
 ---
 
-**2. Common Model Synced Webhook** (`{common_model}.synced`)
+**2. Common Model Synced Webhook** (`{WebhookModel}.synced`)
+
+> **The model name in the event string is not always the Common Model name.** CRM, File Storage, Knowledge Base, and Marketing carry an internal prefix on the wire — `CRMAccount.synced`, `FileStorageFile.synced`, `KnowledgeBaseArticle.synced`, `MKTGCampaign.synced`. HRIS, ATS, Accounting, and Ticketing are mostly unprefixed (`Employee.synced`, `Candidate.synced`, `Invoice.synced`, `Ticket.synced`), with exceptions such as `TicketingContact` and `AccountingTransaction`. The verbatim list per category is in `/merge-unified:onboarding` → `references/webhooks.md`.
 
 Best for granular, model-specific sync notifications during subsequent syncs.
 
@@ -367,7 +369,7 @@ Best for granular, model-specific sync notifications during subsequent syncs.
 
 **Key Fields**:
 - `data.sync_status.last_sync_finished`: Timestamp for incremental fetching
-- `data.sync_status.last_sync_result`: Sync outcome (DONE, PARTIALLY_SYNCED, FAILED)
+- `data.sync_status.last_sync_result`: Sync outcome — one of `SYNCING`, `DONE`, `PARTIALLY_SYNCED`, `FAILED`, `DISABLED`, `PAUSED`. `PARTIALLY_SYNCED` is terminal (the sync finished with some fields failing), and `PAUSED` means the Linked Account has seen no inbound API request or webhook for over 2 weeks, or failed syncs for over 2 weeks — neither resolves by waiting
 - `data.synced_fields`: List of fields that were updated (useful for optimization)
 
 **Use Case**: Subscribe to `Employee.synced`, `Company.synced`, etc. individually, trigger fetching for only that model
@@ -414,8 +416,9 @@ Best for granular, model-specific sync notifications during subsequent syncs.
 
 **Webhook Timeout and Retry Behavior**:
 - **Process asynchronously**: Webhook processing must be asynchronous to ensure prompt responses
-- **10-second timeout**: If your endpoint doesn't respond within 10 seconds (or returns 4xx/5xx), Merge considers the delivery failed. Aim to ACK in under 5 seconds
-- **Automatic retries**: 5 attempts over ~1 hour with exponential backoff
+- **10-second timeout**: If your endpoint doesn't respond within 10 seconds, Merge considers the delivery failed. Aim to ACK in under 5 seconds
+- **Automatic retries**: 1 initial attempt + 2 retries, backing off 1s then 2s — the whole sequence is over in seconds
+- **4xx is not retried**: retries fire only on 5xx, a connection error, or a timeout. A `4xx` from your endpoint is treated as a permanently bad target and the event is dropped. This is why polling is the required backstop, not an optional extra
 - **Best practice**: Return 200 OK immediately upon receipt, then process webhook payload asynchronously in background job
 
 #### Polling (Periodic Checks)

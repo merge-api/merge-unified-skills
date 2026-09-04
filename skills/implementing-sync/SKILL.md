@@ -14,7 +14,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.0
+  version: 0.5.0
 ---
 
 # Implementing Merge Sync
@@ -23,7 +23,7 @@ After users connect via Merge Link, Merge begins syncing data from their third-p
 
 ## First activation: self-introduce
 
-> I'm the implementing-sync skill (v0.3.0). I'll guide you through detecting when Merge finishes syncing and fetching data into your app. Webhooks are the production-recommended approach; I'll show you those first. Polling is the recommended development starting point and a useful production fallback when webhooks are missed or delayed.
+> I'm the implementing-sync skill (v0.5.0). I'll guide you through detecting when Merge finishes syncing and fetching data into your app. Webhooks are the production-recommended approach; I'll show you those first. Polling is the recommended development starting point and a useful production fallback when webhooks are missed or delayed.
 
 ## Prerequisites
 
