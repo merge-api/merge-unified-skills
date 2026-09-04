@@ -13,7 +13,8 @@ This single endpoint validates both credentials at once. If it returns 401, the 
 ```json
 {
   "id": "linked-account-uuid",
-  "integration_name": "Google Drive",
+  "integration": "Google Drive",
+  "integration_slug": "google-drive",
   "status": "COMPLETE",
   "category": "filestorage",
   "end_user_origin_id": "user_123",
@@ -22,7 +23,7 @@ This single endpoint validates both credentials at once. If it returns 401, the 
 ```
 **Key fields to check:**
 - `status`: should be `COMPLETE`. If `RELINK_NEEDED` → credentials expired. If `INCOMPLETE` → user didn't finish the Link flow.
-- `integration_name`: confirms which provider is connected.
+- `integration`: confirms which provider is connected. This is the provider's display name (`"Google Drive"`); the slug is a separate field, `integration_slug`. There is no `integration_name` on this response — reading it yields `undefined`.
 
 **Failure modes:**
 - `401` with both headers → could be either credential. Retry without `X-Account-Token` to isolate.
