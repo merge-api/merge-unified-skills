@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.7.0
+  version: 0.7.1
 ---
 
 # Merge Integration Assistant

@@ -108,7 +108,9 @@ def create_link_token():
 
 #### Link Token Generation Function
 ```python
-def generate_merge_link_token(end_user_origin_id, category, integration=None):
+def generate_merge_link_token(end_user_origin_id, category, integration=None,
+                              end_user_email_address=None,
+                              end_user_organization_name=None):
     """Generate fresh link token for Merge Link modal"""
     url = f"https://api.merge.dev/api/{category}/v1/link-token"
     
@@ -119,6 +121,8 @@ def generate_merge_link_token(end_user_origin_id, category, integration=None):
     
     payload = {
         'end_user_origin_id': end_user_origin_id,
+        'end_user_email_address': end_user_email_address or current_user.email,
+        'end_user_organization_name': end_user_organization_name or current_user.organization_name,
         'categories': [category]
     }
     
@@ -131,6 +135,8 @@ def generate_merge_link_token(end_user_origin_id, category, integration=None):
     
     return response.json()['link_token']
 ```
+
+⚠️ **`end_user_email_address` and `end_user_organization_name` are required, not optional.** The link-token request body requires all four of `categories`, `end_user_origin_id`, `end_user_email_address`, and `end_user_organization_name`; omitting either of the latter two returns a `400`. Both are identification-only — setting the email address does not cause Merge to send any mail — and both cap at 100 characters.
 
 ### 2. Public Token Exchange
 

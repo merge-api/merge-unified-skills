@@ -344,6 +344,17 @@ page = merge.hris.employees.list(modified_after=yesterday.isoformat())
 
 Use `modified_after` in your sync logic to avoid re-pulling unchanged data.
 
+## Two list parameters that change what rows come back
+
+Every list endpoint in every category accepts these, and both default to off. If your row counts don't match what the customer sees in the provider, check these before anything else.
+
+| Parameter | What it adds |
+|---|---|
+| `include_deleted_data` | Records deleted in the third-party platform, so you can propagate the deletion instead of inferring it from a row's absence. Coverage varies by integration — native deletion detection is free with limited coverage, full coverage is a paid add-on. |
+| `include_shell_data` | Shell records: rows that exist but are empty. They may carry some metadata, and every other field is `null`. |
+
+⚠️ **Shell records will trip mapping code that assumes fields are populated.** If you pass `include_shell_data=true`, every field you read has to tolerate `null`. Leave it off unless you specifically need the placeholder rows.
+
 ## Remote Data
 
 Each Common Model record can include a `remote_data` field with the raw provider response. Useful when you need a provider-specific field that isn't on the Common Model.

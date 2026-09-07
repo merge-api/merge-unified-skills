@@ -4,7 +4,7 @@ description: Implement sync status visibility and user-facing messaging for the 
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.3.1
 ---
 
 # Surface Sync Status to End Users
@@ -45,6 +45,7 @@ Build three sync status UI states on the settings page. Your backend should poll
 | `results[].is_initial_sync` | boolean | `true` if this is the first-ever sync for this model |
 | `results[].last_sync_start` | datetime | When the most recent sync started |
 | `results[].last_sync_finished` | datetime | When it finished |
+| `results[].next_sync_start` | datetime | When the next automatic sync is scheduled. This is the "next sync" time to render — you don't need to compute it from a cadence. |
 | `results[].last_sync_result` | string | Same six values as `status`, for the run that just completed |
 | `results[].data_fresh_as_of` | datetime or null | The point in time the model's data is complete through. Null until the first sync completes. |
 
@@ -83,7 +84,7 @@ When `initial_sync_complete == true` and all models report success, replace the 
 
 - Message: "Connected and synced." with a checkmark or success indicator.
 - Show a record count or data summary if available (e.g., "542 employees synced").
-- Show next scheduled sync time if exposed by your backend.
+- Show the next scheduled sync time from `next_sync_start`.
 
 ### Pattern 3: Partial sync or error state
 

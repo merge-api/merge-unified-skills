@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.0
+  version: 0.4.1
 ---
 
 # Implementing Merge Sync via Webhooks (Primary)
@@ -276,7 +276,7 @@ Never return other 4xx codes.
 
 - [ ] Endpoint accepts POST at `/api/webhooks/merge` (or your chosen path)
 - [ ] HMAC-SHA256 signature verification implemented; uses `compare_digest`
-- [ ] Returns 200 OK within 5 seconds (well under Merge's 30s timeout)
+- [ ] Returns 200 OK within 5 seconds (well under Merge's 10s timeout)
 - [ ] Webhook processing is asynchronous (background job)
 - [ ] Initial path: sets `initial_sync_complete = true` and triggers full fetch
 - [ ] Subsequent path: extracts `last_sync_finished` per model from `data.sync_status`
