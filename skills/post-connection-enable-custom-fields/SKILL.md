@@ -4,7 +4,7 @@ description: Build a settings UI that lets customers select and enable custom fi
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.0
+  version: 0.4.1
 ---
 
 # Enable Custom Fields
@@ -121,6 +121,18 @@ Gives customers a native mapping UI inside your product.
    ```
 
    Optional: `advanced_mapping_expression` (a JSONata expression to transform the value) and `is_integration_wide` (applies the mapping to every Linked Account on that integration — requires `organization_wide_target_field`). The `jmes_path` field is deprecated; use `advanced_mapping_expression`.
+
+   **Organization-wide target fields are created separately.** `organization_wide_target_field` and `is_integration_wide` both reference a target that must already exist. List them with `GET /api/{category}/v1/target-fields` and create one with `POST /api/{category}/v1/target-fields`, which requires `name` and `common_model` (`description` is optional):
+
+   ```json
+   {
+     "name": "t_shirt_size",
+     "common_model": "Employee",
+     "description": "Employee t-shirt size for swag"
+   }
+   ```
+
+   `GET /target-fields` returns only organization-wide targets — the Linked Account-specific ones you create inline via `target_field_name` are not included.
 5. In sync logic: read `field_mappings.linked_account_defined_targets` and store mapped values alongside standard records
 
 ```javascript
