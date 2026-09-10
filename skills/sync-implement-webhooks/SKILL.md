@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.4.1
+  version: 0.4.2
 ---
 
 # Implementing Merge Sync via Webhooks (Primary)
@@ -266,7 +266,7 @@ Never return other 4xx codes.
 
 ## Critical gotchas
 
-- **30-second timeout**: return 200 at the endpoint immediately; ALL data fetching is in the background job.
+- **10-second timeout**: return 200 at the endpoint immediately; ALL data fetching is in the background job.
 - **Deduplication is automatic**: `webhook_finished <= stored.merge_last_sync_finished` handles both duplicates and out-of-order webhooks — no extra logic needed.
 - **First subsequent sync**: `stored.last_synced_at` is null — omit `modified_after`, include only `modified_before`.
 - **Record `last_synced_at` before the fetch**, not after — ensures no gap if records are modified during the fetch window.

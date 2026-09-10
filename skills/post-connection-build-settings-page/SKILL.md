@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.3.1
 ---
 
 # Building the Integration Settings Page
@@ -64,7 +64,7 @@ Fetch account status from `linked_accounts` in your DB, supplemented by `GET htt
 
 | Field | Type | Notes |
 |---|---|---|
-| `status` | string | `"COMPLETE"`, `"INCOMPLETE"`, `"RELINK_NEEDED"` |
+| `status` | string | `"COMPLETE"`, `"INCOMPLETE"`, `"RELINK_NEEDED"`, `"IDLE"` |
 | `integration` | string | Provider name (plain string) |
 | `integration_slug` | string | Provider slug |
 | `end_user_origin_id` | string | Your user ID |

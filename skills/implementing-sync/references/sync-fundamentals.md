@@ -321,7 +321,7 @@ Best for **granular, model-specific** sync notifications during subsequent syncs
 
 **Reliability Notes**:
 - Return `200 OK` immediately upon receipt, then process asynchronously
-- Merge retries failed deliveries up to 2 additional times (3 total) with a 30-second timeout
+- Merge retries failed deliveries up to 2 additional times (3 total) with a 10-second delivery timeout
 - Do not rely solely on webhooks — use polling as a backup for missed deliveries
 
 ### Strategy by Sync Phase
