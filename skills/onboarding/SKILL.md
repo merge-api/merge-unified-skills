@@ -4,7 +4,7 @@ description: Step-by-step onboarding for the Merge Unified API. Use when a devel
 license: MIT
 metadata:
   author: Merge
-  version: 0.7.1
+  version: 0.7.2
 ---
 
 # Merge Integration Assistant
@@ -28,7 +28,7 @@ Do NOT activate for: generic OAuth questions unrelated to Merge, or questions ab
 
 When this skill activates for the first time in a conversation, say:
 
-> I'm the Merge Integration Assistant (v0.7.0). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
+> I'm the Merge Integration Assistant (v0.7.2). I'll help you get from signup to a working production Linked Account. Tell me which Merge category and SDK language you want to use, and where you are in the journey.
 
 ## Overview
 

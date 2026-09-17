@@ -22,7 +22,7 @@ This single endpoint validates both credentials at once. If it returns 401, the 
 }
 ```
 **Key fields to check:**
-- `status`: should be `COMPLETE`. If `RELINK_NEEDED` → credentials expired. If `INCOMPLETE` → user didn't finish the Link flow.
+- `status`: one of four values. `COMPLETE` is healthy. `RELINK_NEEDED` → credentials expired. `INCOMPLETE` → user didn't finish the Link flow. `IDLE` → linked but not syncing. A validator that branches only on the first three reports an `IDLE` account as unrecognized.
 - `integration`: confirms which provider is connected. This is the provider's display name (`"Google Drive"`); the slug is a separate field, `integration_slug`. There is no `integration_name` on this response — reading it yields `undefined`.
 
 **Failure modes:**
