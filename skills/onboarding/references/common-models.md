@@ -144,7 +144,15 @@ Other Ticketing Common Models: `Comment`, `Project`, `Collection`, `User`, `Team
 
 Other File Storage Common Models: `Folder`, `Drive`, `User`, `Group`, `Permission`.
 
-**For RAG/AI use cases:** Enable `File`, `Folder`, `Permission`. Use the `file_url` to download contents and the `permissions` to enforce ACL in your retrieval layer.
+**For RAG/AI use cases:** Enable `File`, `Folder`, `Permission`. Use the `permissions` to enforce ACL in your retrieval layer, and one of the three download routes below to get contents.
+
+| Endpoint | What it returns |
+|---|---|
+| `GET /files/{id}/download` | The file content as a stream of bytes |
+| `GET /files/{id}/download/request-meta` | Metadata to construct an authenticated download request for one file, so you fetch it from the third party directly |
+| `GET /files/download/request-meta` | The same download metadata, listed across files |
+
+A `request-meta` response carries `id`, `url`, `method`, and `headers` — everything needed to issue the download against the provider yourself. The list variant is paginated like any other list endpoint.
 
 **Scopes to enable** for document sync: `File`, `Folder`.
 
@@ -159,7 +167,7 @@ Other File Storage Common Models: `Folder`, `Drive`, `User`, `Group`, `Permissio
 | `description` | string | Article body or summary |
 | `author` | string (UUID) | FK to User |
 | `last_edited_by` | string (UUID) | FK to User |
-| `visibility` | enum | PUBLIC, PRIVATE, INTERNAL |
+| `visibility` | enum | PUBLIC, INTERNAL, RESTRICTED |
 | `article_content_download_url` | string | Full content URL |
 | `checksum` | string | |
 | `article_url` | string | Direct link in source provider |
@@ -274,6 +282,8 @@ Read-only (GET): `/accounting-periods`, `/balance-sheets`, `/cash-flow-statement
 | `/tickets` | GET, POST, PATCH |
 
 Read-only (GET): `/accounts`, `/collections`, `/projects`, `/roles`, `/tags`, `/teams`, `/users`
+
+`GET /tickets/live-search` also returns `Ticket` objects and is marked **beta**. Its filters are limited to `name`, `status`, `ticket_url`, `assignee_ids`, `assignees`, `collection_ids`, and `collections`, and it pages with `remote_cursor` rather than `cursor`. It accepts no `modified_after` or `page_size`, so it is not a drop-in substitute in incremental-sync code.
 
 ### File Storage
 

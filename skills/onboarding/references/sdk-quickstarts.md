@@ -296,11 +296,13 @@ MergeApiClient adminClient = MergeApiClient.builder()
 ### List Files
 
 ```java
-var files = client.filestorage().files().list();
+var files = client.fileStorage().files().list();
 for (var file : files) {
     System.out.println(file.getName() + " (" + file.getMimeType() + ")");
 }
 ```
+
+⚠️ **The File Storage accessor is `fileStorage()`, not `filestorage()`.** Every other Java category accessor is all-lowercase (`hris()`, `ats()`, `crm()`, `accounting()`, `ticketing()`, `knowledgebase()`, `chat()`); File Storage is the one camelCase exception, and `client.filestorage()` does not compile.
 
 The Java SDK returns a `SyncPagingIterable` — iterate directly with a for-each loop. Pagination is handled automatically.
 
@@ -499,9 +501,9 @@ The base API path is `/api/{category}/v1/`. Categories: `hris`, `ats`, `accounti
 |---------|:------:|:----:|:----:|:--:|:----:|:--:|
 | Sync API | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Async API | ✅ | ✅ (native) | ✅ | ✅ (goroutines) | ❌ | ✅ (async/await) |
-| Auto-pagination | ❌ (manual) | ✅ (async iterator) | ❌ (manual) | ❌ (manual) | ❌ (manual) | ❌ (manual) |
+| Auto-pagination | ❌ (manual) | ✅ (async iterator) | ✅ (`SyncPagingIterable`) | ❌ (manual) | ❌ (manual) | ❌ (manual) |
 | Type hints / generics | ✅ | ✅ (TS) | ✅ | ✅ | ❌ | ✅ |
 | Webhook signature helper | ❌ (use `hmac` stdlib) | ❌ (use `crypto`) | ❌ | ❌ | ❌ | ❌ |
 | Retries on 429/5xx | ✅ (configurable) | ✅ (configurable) | ✅ (configurable) | ✅ | ✅ | ✅ |
 
-For Node, prefer the async iterator pattern. All other languages require manual pagination loops (fetch page, check `next` cursor, repeat).
+For Node, prefer the async iterator pattern; for Java, iterate the returned `SyncPagingIterable` directly. Python, Go, Ruby and C# require manual pagination loops (fetch page, check `next` cursor, repeat).
