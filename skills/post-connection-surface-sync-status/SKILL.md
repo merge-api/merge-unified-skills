@@ -4,7 +4,7 @@ description: Implement sync status visibility and user-facing messaging for the 
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.1
+  version: 0.3.2
 ---
 
 # Surface Sync Status to End Users
@@ -37,6 +37,7 @@ Build three sync status UI states on the settings page. Your backend should poll
 
 | Field | Type | Notes |
 |---|---|---|
+| `next` / `previous` | string or null | Cursor tokens. The endpoint is paginated — it accepts `cursor` and `page_size` (default 30, max 100). Follow `next` until null, or a category with many models returns a partial picture. |
 | `results` | array | One entry per Common Model |
 | `results[].model_name` | string | e.g. `"Employee"`, `"Contact"` |
 | `results[].model_id` | string | e.g. `"hris.Employee"` |

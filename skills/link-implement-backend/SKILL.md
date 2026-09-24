@@ -4,7 +4,7 @@ description: Implement the four Merge Link backend API endpoints: link token cre
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.2.1
 ---
 
 # Implement Merge Link Backend
@@ -63,7 +63,7 @@ Implement all four endpoints with authentication middleware on each. Use the exi
 ### Endpoint 2: POST /api/merge/exchange-public-token
 
 1. Receive `public_token` and `end_user_origin_id` from frontend (the frontend must send the origin ID alongside the public token — the exchange response does NOT contain it)
-2. Call `POST https://api.merge.dev/api/{category}/v1/account-token/{public_token}` with `Authorization: Bearer {MERGE_API_KEY}` to get `account_token`
+2. Call `GET https://api.merge.dev/api/{category}/v1/account-token/{public_token}` with `Authorization: Bearer {MERGE_API_KEY}` to get `account_token` (this exchange is a `GET`, not a `POST`)
 3. Call `GET https://api.merge.dev/api/{category}/v1/account-details` with both `Authorization: Bearer {MERGE_API_KEY}` and `X-Account-Token: {account_token}` headers
 4. Extract `end_user_origin_id`, `integration`, and `integration_slug` from the account details response (top level, not nested — see gotchas)
 5. Look up the `linked_accounts` record by `end_user_origin_id`

@@ -272,6 +272,8 @@ Read-only (GET): `/custom-object-classes`, `/engagement-types`, `/stages`, `/use
 
 Read-only (GET): `/accounting-periods`, `/balance-sheets`, `/cash-flow-statements`, `/company-info`, `/employees`, `/general-ledger-transactions`, `/income-statements`, `/payment-methods`, `/payment-terms`, `/projects`, `/tax-rates`, `/tracking-categories`, `/transactions`
 
+Four Accounting endpoints also accept **batched** writes, which no other category has: `POST /invoices/bulk`, `POST /expenses/bulk`, `POST /item-fulfillments/bulk`, and `POST /sales-orders/bulk`. The body is `{ "batch_items": [ ... ] }`. These are asynchronous — the call returns `202` with `{ "batch_id": "..." }` rather than the created records, and you poll `GET /{path}/bulk/{batch_id}` for `{ batch_id, status, total_count, objects }`. Subscribe to the `AsyncBulkPost.completed` webhook instead of polling if you already have a webhook endpoint.
+
 ### Ticketing
 
 | Endpoint | Supported verbs |

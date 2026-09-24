@@ -99,7 +99,7 @@ Merge provides the `GET /api/{category}/v1/sync-status` endpoint to monitor sync
 **Response Structure**:
 ```json
 {
-  "next": "https://api.merge.dev/api/hris/v1/sync-status?cursor=abc123",
+  "next": "cD0yMDIxLTAxLTA2KzAzJTNBMjQlM0E1My40MzQzMjYlMkIwMCUzQTAw",
   "previous": null,
   "results": [
     {
@@ -119,7 +119,7 @@ Merge provides the `GET /api/{category}/v1/sync-status` endpoint to monitor sync
       "next_sync_start": "2024-01-15T22:28:00Z",
       "status": "DONE",
       "is_initial_sync": false,
-      "last_sync_result": "SUCCESSFUL",
+      "last_sync_result": "DONE",
       "last_sync_finished": "2024-01-15T10:29:15Z"
     },
     {
@@ -151,7 +151,7 @@ Merge provides the `GET /api/{category}/v1/sync-status` endpoint to monitor sync
 - `last_sync_finished`: Timestamp when sync completed
 - `next_sync_start`: Scheduled time for next automatic sync
 
-**Pagination**: Results are paginated. Use `next` URL to retrieve additional models.
+**Pagination**: Results are paginated. `next` is an opaque cursor token, not a URL — pass it back as the `cursor` query parameter (`?cursor={next}`) to retrieve additional models. `page_size` defaults to 30 and maxes at 100.
 
 ### Detecting Data Readiness
 
