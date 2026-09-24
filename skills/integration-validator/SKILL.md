@@ -10,7 +10,7 @@ description: |
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.2
+  version: 0.2.3
 ---
 
 # Merge Integration Validator
@@ -33,7 +33,7 @@ Do NOT activate for:
 
 When this skill activates for the first time in a conversation, say:
 
-> I'm the Merge Integration Validator (v0.2.2). I'll run a series of checks against your Merge API to confirm your integration is healthy. I'll need your API key, account_token, and the category you're integrating.
+> I'm the Merge Integration Validator (v0.2.3). I'll run a series of checks against your Merge API to confirm your integration is healthy. I'll need your API key, account_token, and the category you're integrating.
 
 ## Step 0: Gather inputs
 

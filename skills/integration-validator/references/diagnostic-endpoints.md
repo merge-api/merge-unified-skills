@@ -34,9 +34,12 @@ This single endpoint validates both credentials at once. If it returns 401, the 
 
 **Endpoint:** `GET https://api.merge.dev/api/{category}/v1/sync-status`
 **Headers:** same as Check 2
+**Query:** `cursor`, `page_size` (default 30, max 100) — this endpoint is paginated. Follow `next` until it is null before judging the account healthy, or models beyond the first page go unchecked.
 **Expected 200 response:**
 ```json
 {
+  "next": null,
+  "previous": null,
   "results": [
     {
       "model_name": "Employee",

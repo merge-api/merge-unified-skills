@@ -14,7 +14,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.5.1
+  version: 0.5.2
 ---
 
 # Implementing Merge Sync
@@ -23,7 +23,7 @@ After users connect via Merge Link, Merge begins syncing data from their third-p
 
 ## First activation: self-introduce
 
-> I'm the implementing-sync skill (v0.5.1). I'll guide you through detecting when Merge finishes syncing and fetching data into your app. Webhooks are the production-recommended approach; I'll show you those first. Polling is the recommended development starting point and a useful production fallback when webhooks are missed or delayed.
+> I'm the implementing-sync skill (v0.5.2). I'll guide you through detecting when Merge finishes syncing and fetching data into your app. Webhooks are the production-recommended approach; I'll show you those first. Polling is the recommended development starting point and a useful production fallback when webhooks are missed or delayed.
 
 ## Prerequisites
 
@@ -91,7 +91,7 @@ Record the user's answers. Carry them as context into Step 2 (and Step 3 if runn
 Pick **one of these starting paths**, then add the other as a fallback when going to production.
 
 - **2a. Webhooks (PRIMARY for production)** — invoke `sync-implement-webhooks`
-  Registers a webhook endpoint that Merge calls when `SYNC_FINISHED` (or related events) fires. Covers both initial sync detection and incremental subsequent syncs.
+  Registers a webhook endpoint that Merge calls when `LinkedAccount.sync_completed` (or a per-model `{WebhookModel}.synced` event) fires. Covers both initial sync detection and incremental subsequent syncs.
 - **2b. Polling (development starting point and production fallback)** — invoke `sync-implement-polling`
   Runs a scheduled job that checks Merge sync status and fetches data via `modified_after`. Covers both initial detection and subsequent incremental fetches.
 

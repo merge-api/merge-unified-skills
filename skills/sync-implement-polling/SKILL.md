@@ -12,7 +12,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.2.0
+  version: 0.2.1
 ---
 
 # Implementing Merge Sync via Polling (Fallback / Development Starting Point)
@@ -96,16 +96,23 @@ A poll interval of **every 5–15 minutes is a reasonable default** for initial 
 every {configured interval}:
   for each account in linked_accounts WHERE account_token IS NOT NULL:
     try:
-      response = GET https://api.merge.dev/api/{account.category}/v1/sync-status
-        headers: Authorization: Bearer {MERGE_API_KEY}
-                 X-Account-Token: {account.account_token}
+      models = []
+      cursor = null
+      repeat:                                  # /sync-status is paginated — see below
+        response = GET https://api.merge.dev/api/{account.category}/v1/sync-status
+          query:   page_size=100, cursor={cursor}
+          headers: Authorization: Bearer {MERGE_API_KEY}
+                   X-Account-Token: {account.account_token}
+        models += response.results
+        cursor = response.next
+      until cursor is null
 
       if NOT account.initial_sync_complete:
-        if all_ready(response.results):
+        if all_ready(models):
           set linked_accounts.initial_sync_complete = true WHERE id = account.id
           trigger fetch_initial_data(account)
       else:
-        process_subsequent(account, response.results)
+        process_subsequent(account, models)
 
     except error:
       log error for account.id, continue to next account
@@ -208,6 +215,7 @@ Apply the same pattern to both `GET /sync-status` and the data fetch calls.
 
 ## Critical gotchas
 
+- **`GET /sync-status` is paginated** — it accepts `cursor` and `page_size` (default 30, max 100) and returns `next` / `previous` alongside `results`. Reading only the first page silently drops models: Accounting alone has ~30 syncable Common Models, so `all_ready()` can return true while models it never saw are still `SYNCING`. Follow `next` until it is null before evaluating readiness.
 - **OR not AND for initial readiness**: `status == "DONE" OR is_initial_sync == false`.
 - **Skip DISABLED models** when checking initial readiness.
 - **Accept BOTH `DONE` and `PARTIALLY_SYNCED` for subsequent** — unlike initial sync, which requires DONE only.

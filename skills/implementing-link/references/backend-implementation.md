@@ -207,7 +207,7 @@ def retrieve_account_token(public_token, category='hris'):
         'Content-Type': 'application/json'
     }
     
-    response = requests.post(url, headers=headers)
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     
     return response.json()['account_token']

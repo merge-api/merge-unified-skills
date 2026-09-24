@@ -13,7 +13,7 @@ description: >
 license: MIT
 metadata:
   author: Merge
-  version: 0.3.0
+  version: 0.3.1
 ---
 
 # Choosing a Data-Scope Filtering Strategy
@@ -63,6 +63,21 @@ Store ALL records from Merge in a staging table (or with an `included` flag), an
 ## Recommendation
 
 Start with **post-storage filtering (Strategy 2)** unless storage cost is a meaningful concern. It's easier to tighten filters later than to backfill excluded records.
+
+## Reading back Merge's own source-side filters
+
+Both strategies above filter data Merge has already fetched. Merge also applies **Selective Sync** filters at the source, before data is fetched from the third party at all — configured in the dashboard rather than through the API. Those filters are invisible to the query parameters below, so a record that Selective Sync excluded will never appear no matter how you filter your request.
+
+`GET /api/{category}/v1/selective-sync/conditions` returns the conditions in effect for a Linked Account (send `X-Account-Token` as usual). Each entry carries:
+
+| Field | Notes |
+|---|---|
+| `common_model` | Which Common Model the condition applies to |
+| `normalized_key_name` / `remote_key_name` | The Merge-side and provider-side field the condition tests |
+| `operator` | One of `CONTAINS`, `EQUALS`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `HAS_ALL_OF`, `HAS_NONE_OF`, `IS_ONE_OF`, `LESS_THAN`, `LESS_THAN_OR_EQUAL_TO`, `NOT_EQUALS`, `WITHIN` |
+| `value` | The value being tested against |
+
+Read this before debugging "why is this record missing" — a source-side condition is a far more common cause than a wrong query parameter. File Storage and Knowledge Base also expose `GET /selective-sync/selections`, and File Storage adds `GET /selective-sync/labels`.
 
 ## Filtering by category — Merge API parameters
 
